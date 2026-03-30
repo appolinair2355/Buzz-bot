@@ -13,7 +13,6 @@ Tout le reste est déjà configuré directement ici.
 """
 
 import os
-import sys
 
 # ============================================================================
 # HELPERS DE PARSING

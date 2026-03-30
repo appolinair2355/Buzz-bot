@@ -7,7 +7,7 @@ from typing import List, Optional, Dict
 from datetime import datetime, timezone, timedelta
 from telethon import TelegramClient, events
 from telethon.sessions import StringSession
-from telethon.errors import ChatWriteForbiddenError, UserBannedInChannelError
+from telethon.errors import ChatWriteForbiddenError, UserBannedInChannelError, FloodWaitError
 from aiohttp import web
 
 from config import (
@@ -127,7 +127,7 @@ def get_intervals_status_text() -> str:
     status = "✅ ON" if intervals_enabled else "❌ OFF"
     allowed = "✅ OUI" if is_prediction_allowed_now() else "🚫 NON"
     lines = [
-        f"⏰ **Intervalles de prédiction**",
+        "⏰ **Intervalles de prédiction**",
         f"Mode restriction: {status}",
         f"Heure Bénin actuelle: {now_benin.strftime('%H:%M')}",
         f"Prédiction autorisée: {allowed}",
@@ -215,36 +215,36 @@ def build_prediction_msg_inverse(game_number: int, suit: str) -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
     return (
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
-        f"🎮 GAME: #N{game_number}\n"
-        f"🃏 Carte {suit_display} : ⌛\n"
-        f"📌 Mode: Dogon 2"
+        f"🎮GAME: #N{game_number}\n"
+        f"🃏Carte {suit_display}:⌛\n"
+        f"Mode: Dogon 2"
     )
 
 def build_prediction_msg_manque(game_number: int, suit: str) -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
     return (
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
-        f"🎮 GAME: #N{game_number}\n"
-        f"🃏 Carte {suit_display} : ⌛\n"
-        f"📌 Mode: Dogon 1"
+        f"🎮GAME: #N{game_number}\n"
+        f"🃏Carte {suit_display}:⌛\n"
+        f"Mode: Dogon 1"
     )
 
 def build_result_msg_inverse(game_number: int, suit: str, status: str) -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
     return (
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
-        f"🎮 GAME: #N{game_number}\n"
-        f"🃏 Carte {suit_display} : {_result_icon(status)}\n"
-        f"📌 Mode: Dogon 2"
+        f"🎮GAME: #N{game_number}\n"
+        f"🃏Carte {suit_display}:{_result_icon(status)}\n"
+        f"Mode: Dogon 2"
     )
 
 def build_result_msg_manque(game_number: int, suit: str, status: str) -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
     return (
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
-        f"🎮 GAME: #N{game_number}\n"
-        f"🃏 Carte {suit_display} : {_result_icon(status)}\n"
-        f"📌 Mode: Dogon 1"
+        f"🎮GAME: #N{game_number}\n"
+        f"🃏Carte {suit_display}:{_result_icon(status)}\n"
+        f"Mode: Dogon 1"
     )
 
 # ── Canaux de redirection Compteur2 : sans Bot ─────────────────────────────
@@ -254,29 +254,29 @@ def build_redirect_msg(game_number: int, suit: str, status: str = '⌛') -> str:
     icon = status if status in ('⌛',) or status.startswith('✅') else "❌"
     return (
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
-        f"🎮 GAME: #N{game_number}\n"
-        f"🃏 Carte {suit_display} : {icon}\n"
-        f"📌 Mode: Dogon 2"
+        f"🎮GAME: #N{game_number}\n"
+        f"🃏Carte {suit_display}:{icon}\n"
+        f"Mode: Dogon 2"
     )
 
-# ── Compteur3 : canal principal (Bot3) et redirection ──────────────────────
+# ── Compteur3 : canal BOT1 ─────────────────────────────────────────────────
 
 def build_prediction_msg_compteur3(game_number: int, suit: str) -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
     return (
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
-        f"🎮 GAME: #N{game_number}\n"
-        f"🃏 Carte {suit_display} : ⌛\n"
-        f"📌 Mode: Miroir"
+        f"🎮GAME: #N{game_number}\n"
+        f"🃏Carte {suit_display}:⌛\n"
+        f"Mode: Miroir"
     )
 
 def build_result_msg_compteur3(game_number: int, suit: str, status: str) -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
     return (
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
-        f"🎮 GAME: #N{game_number}\n"
-        f"🃏 Carte {suit_display} : {_result_icon(status)}\n"
-        f"📌 Mode: Miroir"
+        f"🎮GAME: #N{game_number}\n"
+        f"🃏Carte {suit_display}:{_result_icon(status)}\n"
+        f"Mode: Miroir"
     )
 
 def build_redirect_msg_compteur3(game_number: int, suit: str, status: str = '⌛') -> str:
@@ -284,29 +284,29 @@ def build_redirect_msg_compteur3(game_number: int, suit: str, status: str = '⌛
     icon = status if status in ('⌛',) or status.startswith('✅') else "❌"
     return (
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
-        f"🎮 GAME: #N{game_number}\n"
-        f"🃏 Carte {suit_display} : {icon}\n"
-        f"📌 Mode: Miroir"
+        f"🎮GAME: #N{game_number}\n"
+        f"🃏Carte {suit_display}:{icon}\n"
+        f"Mode: Miroir"
     )
 
-# ── Compteur1 : canal principal (Bot1) et redirection ──────────────────────
+# ── Compteur1 : canal BOT2 ─────────────────────────────────────────────────
 
 def build_prediction_msg_compteur1(game_number: int, suit: str) -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
     return (
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
-        f"🎮 GAME: #N{game_number}\n"
-        f"🃏 Carte {suit_display} : ⌛\n"
-        f"📌 Mode: Manque"
+        f"🎮GAME: #N{game_number}\n"
+        f"🃏Carte {suit_display}:⌛\n"
+        f"Mode: Manque"
     )
 
 def build_result_msg_compteur1(game_number: int, suit: str, status: str) -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
     return (
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
-        f"🎮 GAME: #N{game_number}\n"
-        f"🃏 Carte {suit_display} : {_result_icon(status)}\n"
-        f"📌 Mode: Manque"
+        f"🎮GAME: #N{game_number}\n"
+        f"🃏Carte {suit_display}:{_result_icon(status)}\n"
+        f"Mode: Manque"
     )
 
 def build_redirect_msg_compteur1(game_number: int, suit: str, status: str = '⌛') -> str:
@@ -314,9 +314,9 @@ def build_redirect_msg_compteur1(game_number: int, suit: str, status: str = '⌛
     icon = status if status in ('⌛',) or status.startswith('✅') else "❌"
     return (
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
-        f"🎮 GAME: #N{game_number}\n"
-        f"🃏 Carte {suit_display} : {icon}\n"
-        f"📌 Mode: Manque"
+        f"🎮GAME: #N{game_number}\n"
+        f"🃏Carte {suit_display}:{icon}\n"
+        f"Mode: Manque"
     )
 
 # ============================================================================
@@ -351,7 +351,7 @@ def update_history_status(game_number: int, pred_type: str, status: str):
 # ============================================================================
 
 async def send_compteur2_prediction(game_number: int, missing_suit: str) -> bool:
-    """Envoie UNE prédiction Compteur2 (Bot2) au canal principal et vers le canal dédié."""
+    """Envoie UNE prédiction Compteur2 (Dogon2 B=5) directement vers BOT3 (CHANNEL_INVERSE_ID)."""
     global last_prediction_time, attente_locked, last_prediction_game
 
     if not is_prediction_allowed_now():
@@ -362,20 +362,20 @@ async def send_compteur2_prediction(game_number: int, missing_suit: str) -> bool
         )
         return False
 
-    if not PREDICTION_CHANNEL_ID:
-        logger.error("❌ PREDICTION_CHANNEL_ID non configuré")
+    if not CHANNEL_INVERSE_ID:
+        logger.error("❌ CHANNEL_INVERSE_ID (BOT3) non configuré")
         return False
 
-    prediction_entity = await resolve_channel(PREDICTION_CHANNEL_ID)
-    if not prediction_entity:
-        logger.error(f"❌ Canal prédiction inaccessible: {PREDICTION_CHANNEL_ID}")
+    dest_entity = await resolve_channel(CHANNEL_INVERSE_ID)
+    if not dest_entity:
+        logger.error(f"❌ Canal BOT3 inaccessible: {CHANNEL_INVERSE_ID}")
         return False
 
     predicted_suit = SUIT_INVERSE_C2.get(missing_suit, missing_suit)
 
     try:
         msg = build_prediction_msg_inverse(game_number, predicted_suit)
-        sent = await client.send_message(prediction_entity, msg)
+        sent = await client.send_message(dest_entity, msg)
 
         last_prediction_time = datetime.now()
         last_prediction_game = game_number
@@ -392,31 +392,23 @@ async def send_compteur2_prediction(game_number: int, missing_suit: str) -> bool
         add_prediction_to_history(game_number, predicted_suit, "", missing_suit)
 
         logger.info(
-            f"✅ Compteur2 prédiction envoyée: #{game_number} "
-            f"Bot2={predicted_suit} (déclenché par {missing_suit} absent {compteur2_b}x)"
+            f"✅ Compteur2 (Dogon2) prédiction → BOT3 #{game_number} "
+            f"{predicted_suit} (déclenché par {missing_suit} absent {compteur2_b}x)"
         )
-
-        if CHANNEL_INVERSE_ID:
-            redirect_txt = build_redirect_msg(game_number, predicted_suit)
-            r_sent = await send_to_redirect_channel(CHANNEL_INVERSE_ID, redirect_txt)
-            if r_sent:
-                pending_inverse[game_number]['redirect_message_id'] = r_sent.id
-
         return True
 
     except ChatWriteForbiddenError:
-        logger.error(f"❌ Pas la permission d'écrire dans le canal {PREDICTION_CHANNEL_ID}")
+        logger.error(f"❌ Pas la permission d'écrire dans le canal {CHANNEL_INVERSE_ID}")
         return False
     except UserBannedInChannelError:
-        logger.error(f"❌ Bot banni du canal {PREDICTION_CHANNEL_ID}")
+        logger.error(f"❌ Bot banni du canal {CHANNEL_INVERSE_ID}")
         return False
     except Exception as e:
         logger.error(f"❌ Erreur envoi prédiction Compteur2: {e}")
         return False
 
 async def send_compteur3_prediction(game_number: int, missing_suit: str) -> bool:
-    """Envoie UNE prédiction Compteur3 (miroir du costume manquant) vers le canal
-    principal et vers le canal de redirection Compteur3."""
+    """Envoie UNE prédiction Compteur3 (Miroir B=5) directement vers BOT1 (PREDICTION_CHANNEL_ID)."""
     global last_prediction_game_c3
 
     if not is_prediction_allowed_now():
@@ -424,19 +416,19 @@ async def send_compteur3_prediction(game_number: int, missing_suit: str) -> bool
         return False
 
     if not PREDICTION_CHANNEL_ID:
-        logger.error("❌ PREDICTION_CHANNEL_ID non configuré")
+        logger.error("❌ PREDICTION_CHANNEL_ID (BOT1) non configuré")
         return False
 
-    prediction_entity = await resolve_channel(PREDICTION_CHANNEL_ID)
-    if not prediction_entity:
-        logger.error(f"❌ Canal prédiction inaccessible: {PREDICTION_CHANNEL_ID}")
+    dest_entity = await resolve_channel(PREDICTION_CHANNEL_ID)
+    if not dest_entity:
+        logger.error(f"❌ Canal BOT1 inaccessible: {PREDICTION_CHANNEL_ID}")
         return False
 
     inverse_suit = SUIT_INVERSE.get(missing_suit, missing_suit)
 
     try:
         msg = build_prediction_msg_compteur3(game_number, inverse_suit)
-        sent = await client.send_message(prediction_entity, msg)
+        sent = await client.send_message(dest_entity, msg)
 
         last_prediction_game_c3 = game_number
 
@@ -450,16 +442,9 @@ async def send_compteur3_prediction(game_number: int, missing_suit: str) -> bool
         }
 
         logger.info(
-            f"✅ Compteur3 prédiction envoyée: #{game_number} "
+            f"✅ Compteur3 (Miroir) prédiction → BOT1 #{game_number} "
             f"Miroir={inverse_suit} (déclenché par {missing_suit} absent {compteur3_b}x)"
         )
-
-        if CHANNEL_COMPTEUR3_ID and CHANNEL_COMPTEUR3_ID != PREDICTION_CHANNEL_ID:
-            redirect_txt = build_redirect_msg_compteur3(game_number, inverse_suit)
-            r_sent = await send_to_redirect_channel(CHANNEL_COMPTEUR3_ID, redirect_txt)
-            if r_sent:
-                pending_compteur3[game_number]['redirect_message_id'] = r_sent.id
-
         return True
 
     except ChatWriteForbiddenError:
@@ -473,27 +458,27 @@ async def send_compteur3_prediction(game_number: int, missing_suit: str) -> bool
         return False
 
 async def send_compteur1_prediction(game_number: int, missing_suit: str) -> bool:
-    """Envoie UNE prédiction Compteur1 vers le canal principal et vers le canal Compteur1."""
+    """Envoie UNE prédiction Compteur1 (Manque B=8) directement vers BOT2 (CHANNEL_COMPTEUR1_ID)."""
     global last_prediction_game_c1
 
     if not is_prediction_allowed_now():
         logger.info(f"⏰ Compteur1 #{game_number} bloqué: hors intervalle")
         return False
 
-    if not PREDICTION_CHANNEL_ID:
-        logger.error("❌ PREDICTION_CHANNEL_ID non configuré")
+    if not CHANNEL_COMPTEUR1_ID:
+        logger.error("❌ CHANNEL_COMPTEUR1_ID (BOT2) non configuré")
         return False
 
-    prediction_entity = await resolve_channel(PREDICTION_CHANNEL_ID)
-    if not prediction_entity:
-        logger.error(f"❌ Canal prédiction inaccessible: {PREDICTION_CHANNEL_ID}")
+    dest_entity = await resolve_channel(CHANNEL_COMPTEUR1_ID)
+    if not dest_entity:
+        logger.error(f"❌ Canal BOT2 inaccessible: {CHANNEL_COMPTEUR1_ID}")
         return False
 
     predicted_suit = SUIT_INVERSE_C1.get(missing_suit, missing_suit)
 
     try:
         msg = build_prediction_msg_compteur1(game_number, predicted_suit)
-        sent = await client.send_message(prediction_entity, msg)
+        sent = await client.send_message(dest_entity, msg)
 
         last_prediction_game_c1 = game_number
 
@@ -507,45 +492,45 @@ async def send_compteur1_prediction(game_number: int, missing_suit: str) -> bool
         }
 
         logger.info(
-            f"✅ Compteur1 prédiction envoyée: #{game_number} "
-            f"Prédit={predicted_suit} (déclenché par {missing_suit} absent {compteur1_b}x)"
+            f"✅ Compteur1 (Manque) prédiction → BOT2 #{game_number} "
+            f"{predicted_suit} (déclenché par {missing_suit} absent {compteur1_b}x)"
         )
-
-        if CHANNEL_COMPTEUR1_ID:
-            redirect_txt = build_redirect_msg_compteur1(game_number, predicted_suit)
-            r_sent = await send_to_redirect_channel(CHANNEL_COMPTEUR1_ID, redirect_txt)
-            if r_sent:
-                pending_compteur1[game_number]['redirect_message_id'] = r_sent.id
-
         return True
 
     except ChatWriteForbiddenError:
-        logger.error(f"❌ Pas la permission d'écrire dans le canal {PREDICTION_CHANNEL_ID}")
+        logger.error(f"❌ Pas la permission d'écrire dans le canal {CHANNEL_COMPTEUR1_ID}")
         return False
     except UserBannedInChannelError:
-        logger.error(f"❌ Bot banni du canal {PREDICTION_CHANNEL_ID}")
+        logger.error(f"❌ Bot banni du canal {CHANNEL_COMPTEUR1_ID}")
         return False
     except Exception as e:
         logger.error(f"❌ Erreur envoi prédiction Compteur1: {e}")
         return False
 
 async def update_prediction_message(game_number: int, pred_type: str, status: str, trouve: bool):
-    """Met à jour un message de prédiction (inverse ou manque) avec le résultat,
-    dans le canal principal ET dans le canal de redirection dédié."""
+    """Met à jour le message de prédiction dans le canal propre à chaque compteur.
+      compteur3  → BOT1 (PREDICTION_CHANNEL_ID)
+      inverse    → BOT3 (CHANNEL_INVERSE_ID)
+      compteur1  → BOT2 (CHANNEL_COMPTEUR1_ID)
+    """
     global attente_locked
 
     if pred_type == 'inverse':
         pending = pending_inverse
-        redirect_channel_id = CHANNEL_INVERSE_ID
+        main_channel_id = CHANNEL_INVERSE_ID
+        new_msg_fn = lambda g, s, st: build_result_msg_inverse(g, s, st)
     elif pred_type == 'manque':
         pending = pending_manque
-        redirect_channel_id = CHANNEL_INVERSE_ID
+        main_channel_id = CHANNEL_INVERSE_ID
+        new_msg_fn = lambda g, s, st: build_result_msg_manque(g, s, st)
     elif pred_type == 'compteur3':
         pending = pending_compteur3
-        redirect_channel_id = CHANNEL_COMPTEUR3_ID
+        main_channel_id = PREDICTION_CHANNEL_ID
+        new_msg_fn = lambda g, s, st: build_result_msg_compteur3(g, s, st)
     elif pred_type == 'compteur1':
         pending = pending_compteur1
-        redirect_channel_id = CHANNEL_COMPTEUR1_ID
+        main_channel_id = CHANNEL_COMPTEUR1_ID
+        new_msg_fn = lambda g, s, st: build_result_msg_compteur1(g, s, st)
     else:
         logger.error(f"❌ update_prediction_message: pred_type inconnu '{pred_type}'")
         return
@@ -556,39 +541,15 @@ async def update_prediction_message(game_number: int, pred_type: str, status: st
     pred = pending[game_number]
     suit = pred['suit']
     msg_id = pred['message_id']
-    redirect_msg_id = pred.get('redirect_message_id')
-
-    if pred_type == 'inverse':
-        new_msg = build_result_msg_inverse(game_number, suit, status)
-        redirect_result = build_redirect_msg(game_number, suit, status)
-    elif pred_type == 'manque':
-        new_msg = build_result_msg_manque(game_number, suit, status)
-        redirect_result = build_redirect_msg(game_number, suit, status)
-    elif pred_type == 'compteur3':
-        new_msg = build_result_msg_compteur3(game_number, suit, status)
-        redirect_result = build_redirect_msg_compteur3(game_number, suit, status)
-    else:  # compteur1
-        new_msg = build_result_msg_compteur1(game_number, suit, status)
-        redirect_result = build_redirect_msg_compteur1(game_number, suit, status)
+    new_msg = new_msg_fn(game_number, suit, status)
 
     try:
-        prediction_entity = await resolve_channel(PREDICTION_CHANNEL_ID)
-        if not prediction_entity:
-            logger.error("❌ Canal prédiction inaccessible pour mise à jour")
+        dest_entity = await resolve_channel(main_channel_id)
+        if not dest_entity:
+            logger.error(f"❌ Canal [{pred_type.upper()}] inaccessible pour mise à jour: {main_channel_id}")
             return
 
-        # ── Mise à jour canal principal ────────────────────────────────────────
-        await client.edit_message(prediction_entity, msg_id, new_msg)
-
-        # ── Mise à jour canal de redirection ──────────────────────────────────
-        if redirect_msg_id and redirect_channel_id:
-            redirect_entity = await resolve_channel(redirect_channel_id)
-            if redirect_entity:
-                try:
-                    await client.edit_message(redirect_entity, redirect_msg_id, redirect_result)
-                    logger.info(f"📝 Redirection [{pred_type.upper()}] mise à jour: #{game_number} {status}")
-                except Exception as e_r:
-                    logger.error(f"❌ Erreur update redirection [{pred_type}]: {e_r}")
+        await client.edit_message(dest_entity, msg_id, new_msg)
 
         pred['status'] = status
         if pred_type in ('inverse', 'manque'):
@@ -602,11 +563,11 @@ async def update_prediction_message(game_number: int, pred_type: str, status: st
         if game_number in pending:
             del pending[game_number]
 
-        # Mode Attente: déverrouille uniquement quand LES DEUX Compteur2 sont résolues
+        # Mode Attente: déverrouille quand Compteur2 est résolue
         if attente_mode and not trouve and pred_type != 'compteur3':
             if game_number not in pending_inverse and game_number not in pending_manque:
                 attente_locked = False
-                logger.info("🔓 Mode Attente: les deux prédictions perdues → prêt")
+                logger.info("🔓 Mode Attente: prédiction perdue → prêt")
 
     except Exception as e:
         logger.error(f"❌ Erreur update message [{pred_type}]: {e}")
@@ -698,7 +659,7 @@ def get_compteur2_status_text() -> str:
         attente_status = "🔒 Verrouillé (attend PERDU)" if attente_locked else "🔓 Prêt"
         lines.append(f"\n🕐 Mode Attente: ✅ ON | {attente_status}")
     else:
-        lines.append(f"\n🕐 Mode Attente: ❌ OFF")
+        lines.append("\n🕐 Mode Attente: ❌ OFF")
 
     inv_ch = f"`{CHANNEL_INVERSE_ID}`" if CHANNEL_INVERSE_ID else "Non configuré"
     lines.append(f"\n📡 Canal Compteur2 (Bot2): {inv_ch}")
@@ -1690,7 +1651,7 @@ async def cmd_status(event):
         f"🔮 Prédictions actives: Dogon2={len(pending_inverse)} | Dogon1={len(pending_manque)}",
         f"📡 Source: API 1xBet (polling {API_POLL_INTERVAL}s)",
         f"📦 Jeux en cache: {len(api_results_cache)}",
-        f"🔄 Reset automatique: partie #1440 terminée",
+        "🔄 Reset automatique: partie #1440 terminée",
         f"🎯 Rattrapage max: {MAX_RATTRAPAGE}",
     ]
 
@@ -1894,8 +1855,97 @@ async def cmd_help(event):
         "`/test` — Tester les canaux\n"
         "`/reset` — Reset complet\n"
         "`/announce <msg>` — Annonce\n"
+        "`/strategie` — Documentation des 3 stratégies\n"
         "`/help` — Cette aide"
     )
+
+# ============================================================================
+# DOCUMENTATION DES STRATÉGIES
+# ============================================================================
+
+async def cmd_strategie(event):
+    """Envoie la documentation complète des 3 stratégies, avec le nom réel de chaque canal."""
+    if event.is_group or event.is_channel:
+        return
+    if event.sender_id != ADMIN_ID and ADMIN_ID != 0:
+        await event.respond("🔒 Admin uniquement")
+        return
+
+    async def get_channel_name(channel_id: int) -> str:
+        try:
+            entity = await client.get_entity(channel_id)
+            return getattr(entity, 'title', str(channel_id))
+        except Exception:
+            return str(channel_id)
+
+    name_bot1 = await get_channel_name(PREDICTION_CHANNEL_ID)
+    name_bot2 = await get_channel_name(CHANNEL_COMPTEUR1_ID)
+    name_bot3 = await get_channel_name(CHANNEL_INVERSE_ID)
+
+    doc = (
+        "📖 **DOCUMENTATION DES STRATÉGIES**\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n\n"
+
+        "**Principe commun aux 3 canaux**\n"
+        "Le bot analyse les cartes du joueur à chaque partie de Baccarat. "
+        "Il compte combien de fois de suite chaque couleur (♠️ ♥️ ♦️ ♣️) est ABSENTE. "
+        "Quand ce compteur dépasse le seuil **B**, une prédiction est envoyée. "
+        "Le bot vérifie ensuite si la carte prédite apparaît dans les 2 parties suivantes "
+        "(rattrapage R1 et R2).\n\n"
+
+        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"🟡 **Canal : {name_bot1}**\n"
+        f"📌 Stratégie : Miroir — Seuil B=5\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"Dans ce canal, le bot prédit la couleur **symétrique** (miroir) "
+        f"de la couleur absente depuis 5 parties consécutives.\n\n"
+        f"❤️ absent 5x → prédit **♦️**\n"
+        f"♦️ absent 5x → prédit **❤️**\n"
+        f"♠️ absent 5x → prédit **♣️**\n"
+        f"♣️ absent 5x → prédit **♠️**\n\n"
+        f"**Exemple :** ❤️ n'apparaît pas pendant 5 parties → le canal **{name_bot1}** "
+        f"reçoit une prédiction ♦️.\n\n"
+
+        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"🔵 **Canal : {name_bot2}**\n"
+        f"📌 Stratégie : Manque — Seuil B=8\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"Dans ce canal, le bot prédit la couleur **croisée opposée** "
+        f"de la couleur absente depuis 8 parties consécutives.\n\n"
+        f"❤️ absent 8x → prédit **♣️**\n"
+        f"♣️ absent 8x → prédit **❤️**\n"
+        f"♠️ absent 8x → prédit **♦️**\n"
+        f"♦️ absent 8x → prédit **♠️**\n\n"
+        f"**Exemple :** ♠️ n'apparaît pas pendant 8 parties → le canal **{name_bot2}** "
+        f"reçoit une prédiction ♦️.\n\n"
+
+        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"🟢 **Canal : {name_bot3}**\n"
+        f"📌 Stratégie : Dogon 2 — Seuil B=5\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"Dans ce canal, le bot prédit la couleur selon la **table Dogon 2** "
+        f"dès que la couleur est absente depuis 5 parties consécutives.\n\n"
+        f"♣️ absent 5x → prédit **♦️**\n"
+        f"♦️ absent 5x → prédit **♣️**\n"
+        f"♠️ absent 5x → prédit **❤️**\n"
+        f"❤️ absent 5x → prédit **♠️**\n\n"
+        f"**Exemple :** ♣️ n'apparaît pas pendant 5 parties → le canal **{name_bot3}** "
+        f"reçoit une prédiction ♦️.\n\n"
+
+        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        "🔄 **Système de Rattrapage (commun aux 3 canaux)**\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        "Si la carte prédite n'apparaît pas à la partie visée :\n"
+        "• **R1** — 2ᵉ chance sur la partie suivante\n"
+        "• **R2** — 3ᵉ et dernière chance\n"
+        "• Au-delà → ❌ prédiction perdue\n\n"
+        "✅0️⃣ Gagné dès la 1ʳᵉ partie\n"
+        "✅1️⃣ Gagné au rattrapage R1\n"
+        "✅2️⃣ Gagné au rattrapage R2\n"
+        "❌ Perdu après 3 essais"
+    )
+
+    await event.respond(doc)
 
 # ============================================================================
 # CONFIGURATION DES HANDLERS
@@ -1916,6 +1966,7 @@ def setup_handlers():
     client.add_event_handler(cmd_canal, events.NewMessage(pattern=r'^/canal'))
     client.add_event_handler(cmd_test, events.NewMessage(pattern=r'^/test$'))
     client.add_event_handler(cmd_announce, events.NewMessage(pattern=r'^/announce'))
+    client.add_event_handler(cmd_strategie, events.NewMessage(pattern=r'^/strategie$'))
 
 # ============================================================================
 # DÉMARRAGE
@@ -1975,31 +2026,43 @@ async def start_bot():
             f"🤖 Bot démarré | C1 B={compteur1_b} | C2 B={compteur2_b} | C3 B={compteur3_b} | "
             f"Rattrapage max={MAX_RATTRAPAGE} | Attente={'ON' if attente_mode else 'OFF'}"
         )
-        logger.info(f"🔄 Reset automatique configuré: fin de la partie #1440")
+        logger.info("🔄 Reset automatique configuré: fin de la partie #1440")
         return True
 
+    except FloodWaitError as e:
+        logger.warning(f"⏳ Telegram FloodWait: attente de {e.seconds}s avant reconnexion...")
+        await asyncio.sleep(e.seconds + 5)
+        return None  # Signal pour réessayer
     except Exception as e:
         logger.error(f"❌ Erreur démarrage: {e}")
         return False
 
 async def main():
-    try:
-        if not await start_bot():
-            return
+    # ── 1. Serveur web démarré EN PREMIER (port ouvert avant tout) ─────────
+    app = web.Application()
+    app.router.add_get('/health', lambda r: web.Response(text="OK"))
+    app.router.add_get('/', lambda r: web.Response(text="BACCARAT PRO ✨ Running"))
 
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, '0.0.0.0', PORT)
+    await site.start()
+    logger.info(f"🌐 Serveur web démarré sur port {PORT}")
+
+    # ── 2. Connexion Telegram avec retry automatique sur FloodWait ─────────
+    while True:
+        result = await start_bot()
+        if result is None:
+            logger.info("🔄 Nouvelle tentative de connexion Telegram...")
+            continue
+        if not result:
+            logger.error("❌ Impossible de démarrer le bot — arrêt")
+            return
+        break
+
+    try:
         asyncio.create_task(api_polling_loop())
         logger.info("🔄 Polling API dynamique démarré")
-
-        app = web.Application()
-        app.router.add_get('/health', lambda r: web.Response(text="OK"))
-        app.router.add_get('/', lambda r: web.Response(text="BACCARAT PRO ✨ Running"))
-
-        runner = web.AppRunner(app)
-        await runner.setup()
-        site = web.TCPSite(runner, '0.0.0.0', PORT)
-        await site.start()
-
-        logger.info(f"🌐 Serveur web démarré sur port {PORT}")
 
         await client.run_until_disconnected()
 
