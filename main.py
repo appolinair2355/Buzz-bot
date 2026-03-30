@@ -354,6 +354,10 @@ async def send_compteur2_prediction(game_number: int, missing_suit: str) -> bool
     """Envoie UNE prédiction Compteur2 (Dogon2 B=5) directement vers BOT3 (CHANNEL_INVERSE_ID)."""
     global last_prediction_time, attente_locked, last_prediction_game
 
+    if game_number in pending_inverse:
+        logger.info(f"⏸ Compteur2 #{game_number} ignoré: déjà en attente de vérification")
+        return False
+
     if not is_prediction_allowed_now():
         now_benin = datetime.now(BENIN_TZ)
         logger.info(
@@ -411,6 +415,10 @@ async def send_compteur3_prediction(game_number: int, missing_suit: str) -> bool
     """Envoie UNE prédiction Compteur3 (Miroir B=5) directement vers BOT1 (PREDICTION_CHANNEL_ID)."""
     global last_prediction_game_c3
 
+    if game_number in pending_compteur3:
+        logger.info(f"⏸ Compteur3 #{game_number} ignoré: déjà en attente de vérification")
+        return False
+
     if not is_prediction_allowed_now():
         logger.info(f"⏰ Compteur3 #{game_number} bloqué: hors intervalle")
         return False
@@ -460,6 +468,10 @@ async def send_compteur3_prediction(game_number: int, missing_suit: str) -> bool
 async def send_compteur1_prediction(game_number: int, missing_suit: str) -> bool:
     """Envoie UNE prédiction Compteur1 (Manque B=8) directement vers BOT2 (CHANNEL_COMPTEUR1_ID)."""
     global last_prediction_game_c1
+
+    if game_number in pending_compteur1:
+        logger.info(f"⏸ Compteur1 #{game_number} ignoré: déjà en attente de vérification")
+        return False
 
     if not is_prediction_allowed_now():
         logger.info(f"⏰ Compteur1 #{game_number} bloqué: hors intervalle")
@@ -582,8 +594,10 @@ async def check_one_pending(game_number: int, player_suits: List[str], is_finish
                              pending: dict, pred_type: str):
     """Vérifie les prédictions d'un type pour un jeu donné.
 
-    - Vérification directe : si le jeu prédit est en cours/terminé
-    - Rattrapages : vérifie TOUS les rattrapages en attente pour ce jeu_number
+    - Vérification directe : si le jeu prédit est celui en cours (awaiting_rattrapage == 0)
+    - Rattrapages : vérifie TOUS les rattrapages en attente dont le tour correspond à ce jeu
+    Les deux blocs s'exécutent toujours : un return prématuré ferait rater les rattrapages
+    d'anciennes prédictions qui tombent sur le même numéro de partie.
     """
 
     # --- Vérification directe (awaiting_rattrapage == 0) ---
@@ -597,10 +611,9 @@ async def check_one_pending(game_number: int, player_suits: List[str], is_finish
             elif is_finished:
                 pred['awaiting_rattrapage'] = 1
                 logger.info(f"🔍 [{pred_type.upper()}] #{game_number}: {target_suit} ❌ → R1 #{game_number+1}")
-            # Ne pas retourner ici : d'autres rattrapages peuvent aussi concerner ce jeu
-            return
+            # PAS de return ici : continuer pour vérifier aussi les rattrapages d'anciennes prédictions
 
-    # --- Vérifications rattrapages (toutes les entrées correspondant à ce jeu) ---
+    # --- Vérifications rattrapages (toutes les entrées en attente de rattrapage sur ce jeu) ---
     for original_game, pred in list(pending.items()):
         awaiting = pred.get('awaiting_rattrapage', 0)
         if awaiting <= 0:
