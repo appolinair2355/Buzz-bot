@@ -1,0 +1,36 @@
+{
+  "name": "Baccarat PRO",
+  "description": "Bot Telegram de prediction Baccarat",
+  "keywords": ["python", "telegram", "bot"],
+  "buildpacks": [
+    {"url": "heroku/python"}
+  ],
+  "env": {
+    "API_ID": {
+      "description": "Votre API ID Telegram (my.telegram.org)",
+      "required": true
+    },
+    "API_HASH": {
+      "description": "Votre API Hash Telegram (my.telegram.org)",
+      "required": true
+    },
+    "BOT_TOKEN": {
+      "description": "Token du bot obtenu via @BotFather",
+      "required": true
+    },
+    "ADMIN_ID": {
+      "description": "Votre ID utilisateur Telegram",
+      "required": true
+    },
+    "TELEGRAM_SESSION": {
+      "description": "String de session Telegram (optionnel)",
+      "required": false
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "eco"
+    }
+  }
+}
