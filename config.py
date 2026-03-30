@@ -1,113 +1,105 @@
 # config.py
 """
-Configuration BACCARAT PRO
+╔══════════════════════════════════════════════════════════════════╗
+║              BUZZ INFLUENCE — Configuration Bot                  ║
+╚══════════════════════════════════════════════════════════════════╝
 
-Variables OBLIGATOIRES (doivent etre configurees) :
-  - API_ID              : ID API Telegram (my.telegram.org)
-  - API_HASH            : Hash API Telegram (my.telegram.org)
-  - BOT_TOKEN           : Token du bot (@BotFather)
-  - ADMIN_ID            : Votre ID Telegram utilisateur
+Seules 3 variables DOIVENT être définies dans l'environnement :
+  - API_HASH         : Hash API Telegram  (my.telegram.org)
+  - BOT_TOKEN        : Token du bot       (@BotFather)
+  - TELEGRAM_SESSION : Session Telethon   (StringSession — optionnel)
 
-Variables optionnelles (valeurs par defaut deja configurees) :
-  - PREDICTION_CHANNEL_ID   (defaut : -1003572542646)
-  - CHANNEL_INVERSE_ID      (defaut : -1003800711004)
-  - CHANNEL_MANQUE_ID       (defaut : -1003773458877)
-  - CHANNEL_COMPTEUR3_ID    (defaut : -1003572542646)
-  - CHANNEL_COMPTEUR1_ID    (defaut : -1003572542646)
-  - PORT               (defaut : 10000 — injecte automatiquement par la plateforme)
-  - API_POLL_INTERVAL  (defaut : 5)
-  - COMPTEUR2_ACTIVE   (defaut : true)
-  - COMPTEUR2_B        (defaut : 5)
-  - COMPTEUR3_ACTIVE   (defaut : true)
-  - COMPTEUR3_B        (defaut : 5)
-  - COMPTEUR1_ACTIVE   (defaut : true)
-  - COMPTEUR1_B        (defaut : 8)
-  - TELEGRAM_SESSION
+Tout le reste est déjà configuré directement ici.
 """
 
 import os
+import sys
 
-def parse_channel_id(value: str) -> int:
-    try:
-        channel_id = int(value)
-        if channel_id > 0 and len(str(channel_id)) >= 10:
-            channel_id = -channel_id
-        return channel_id
-    except:
-        raise ValueError(f"ID de canal invalide : {value}")
+# ============================================================================
+# HELPERS DE PARSING
+# ============================================================================
 
-def parse_optional_channel_id(value: str) -> int:
-    if not value or value.strip() == "":
-        return 0
+def _int(v):
     try:
-        return parse_channel_id(value.strip())
-    except:
+        return int(v)
+    except Exception:
         return 0
 
-# ============================================================================
-# IDS PAR DEFAUT — modifiez ici si vous utilisez vos propres canaux
-# ============================================================================
-
-_DEFAULT_PREDICTION_CHANNEL_ID = "-1003774449498"
-_DEFAULT_CHANNEL_INVERSE_ID    = "-1003800711004"
-_DEFAULT_CHANNEL_MANQUE_ID     = "-1003773458877"
-_DEFAULT_CHANNEL_COMPTEUR3_ID  = "-1003572542646"
-_DEFAULT_CHANNEL_COMPTEUR1_ID  = "-1003572542646"
+def _bool(v):
+    return str(v).lower() in ("1", "true", "yes", "on")
 
 # ============================================================================
-# VARIABLES D ENVIRONNEMENT - OBLIGATOIRES
+# CREDENTIALS TELEGRAM
+# ── API_ID et ADMIN_ID sont fixes (non-secrets)
+# ── API_HASH et BOT_TOKEN restent en variables d'environnement (secrets)
 # ============================================================================
 
-ADMIN_ID         = int(os.getenv("ADMIN_ID", "0") or "0")
-API_ID           = int(os.getenv("API_ID", "0") or "0")
-API_HASH         = os.getenv("API_HASH", "") or ""
-BOT_TOKEN        = os.getenv("BOT_TOKEN", "") or ""
+API_ID           = 30696801
+ADMIN_ID         = 8649780855
+API_HASH         = os.getenv("API_HASH", "")  or ""
+BOT_TOKEN        = os.getenv("BOT_TOKEN", "")  or ""
 TELEGRAM_SESSION = os.getenv("TELEGRAM_SESSION", "") or ""
 
 # ============================================================================
-# CANAUX DE PREDICTION (valeurs par defaut pre-configurees)
+# CANAUX DE PRÉDICTION — valeurs fixes
 # ============================================================================
 
-# Canal principal : toutes les predictions partent de ce canal
-PREDICTION_CHANNEL_ID = parse_optional_channel_id(
-    os.getenv("PREDICTION_CHANNEL_ID", _DEFAULT_PREDICTION_CHANNEL_ID) or _DEFAULT_PREDICTION_CHANNEL_ID
-)
+#  BOT1 (𝐁𝐎𝐓𝟏) — Canal principal : toutes les prédictions arrivent ici
+PREDICTION_CHANNEL_ID = -1003774449498
 
-# Compteur2 : Dogon 2 (inverse)
-CHANNEL_INVERSE_ID = parse_optional_channel_id(
-    os.getenv("CHANNEL_INVERSE_ID", _DEFAULT_CHANNEL_INVERSE_ID) or _DEFAULT_CHANNEL_INVERSE_ID
-)
+#  BOT2 (𝐁𝐎𝐓𝟐) — Redirect Compteur1 / Manque (B=8)
+CHANNEL_COMPTEUR1_ID  = -1003773458877
 
-# Compteur2 : Dogon 1 (manquant)
-CHANNEL_MANQUE_ID = parse_optional_channel_id(
-    os.getenv("CHANNEL_MANQUE_ID", _DEFAULT_CHANNEL_MANQUE_ID) or _DEFAULT_CHANNEL_MANQUE_ID
-)
+#  BOT3 (𝐁𝐎𝐓𝟑) — Redirect Compteur2 / Dogon 2 (B=5)
+CHANNEL_INVERSE_ID    = -1003800711004
 
-# Compteur3 : Bot3 — canal dedie
-CHANNEL_COMPTEUR3_ID = parse_optional_channel_id(
-    os.getenv("CHANNEL_COMPTEUR3_ID", _DEFAULT_CHANNEL_COMPTEUR3_ID) or _DEFAULT_CHANNEL_COMPTEUR3_ID
-)
-
-# Compteur1 : Bot1 — canal dedie
-CHANNEL_COMPTEUR1_ID = parse_optional_channel_id(
-    os.getenv("CHANNEL_COMPTEUR1_ID", _DEFAULT_CHANNEL_COMPTEUR1_ID) or _DEFAULT_CHANNEL_COMPTEUR1_ID
-)
+#  BOT1 (𝐁𝐎𝐓𝟏) — Redirect Compteur3 / Miroir (B=5) — même canal que principal
+CHANNEL_COMPTEUR3_ID  = -1003774449498
 
 # ============================================================================
-# PARAMETRES DU BOT
+# PARAMÈTRES DU BOT — valeurs fixes
 # ============================================================================
 
-PORT             = int(os.getenv("PORT", "10000") or "10000")
-API_POLL_INTERVAL = int(os.getenv("API_POLL_INTERVAL", "5") or "5")
+PORT              = int(os.getenv("PORT", "8000"))   # 8000 local | 10000 Render (défini via render.yaml)
+API_POLL_INTERVAL = 3                                # Intervalle de polling API en secondes
 
-COMPTEUR2_ACTIVE = (os.getenv("COMPTEUR2_ACTIVE", "true") or "true").lower() == "true"
-COMPTEUR2_B      = int(os.getenv("COMPTEUR2_B", "5") or "5")
+# Compteur1 — BOT2 / Manque
+COMPTEUR1_ACTIVE  = True
+COMPTEUR1_B       = 8       # Seuil d'absences consécutives
 
-COMPTEUR3_ACTIVE = (os.getenv("COMPTEUR3_ACTIVE", "true") or "true").lower() == "true"
-COMPTEUR3_B      = int(os.getenv("COMPTEUR3_B", "5") or "5")
+# Compteur2 — BOT3 / Dogon 2
+COMPTEUR2_ACTIVE  = True
+COMPTEUR2_B       = 5       # Seuil d'absences consécutives
 
-COMPTEUR1_ACTIVE = (os.getenv("COMPTEUR1_ACTIVE", "true") or "true").lower() == "true"
-COMPTEUR1_B      = int(os.getenv("COMPTEUR1_B", "8") or "8")
+# Compteur3 — BOT1 / Miroir
+COMPTEUR3_ACTIVE  = True
+COMPTEUR3_B       = 5       # Seuil d'absences consécutives
+
+# ============================================================================
+# VALIDATION AU DÉMARRAGE
+# ============================================================================
+
+def validate_config() -> bool:
+    """Vérifie que les secrets obligatoires sont définis.
+    Retourne True si OK, affiche les erreurs et retourne False sinon.
+    """
+    errors = []
+    if not API_HASH:
+        errors.append("  ❌ API_HASH manquant — définir la variable d'environnement API_HASH")
+    if not BOT_TOKEN:
+        errors.append("  ❌ BOT_TOKEN manquant — définir la variable d'environnement BOT_TOKEN")
+
+    if errors:
+        print("╔══ ERREUR DE CONFIGURATION ══════════════════════════════════╗")
+        for e in errors:
+            print(e)
+        print("╚═════════════════════════════════════════════════════════════╝")
+        return False
+
+    if not TELEGRAM_SESSION:
+        print("⚠️  TELEGRAM_SESSION absent — mode bot-token standard activé.")
+
+    return True
 
 # ============================================================================
 # CONSTANTES — NE PAS MODIFIER
@@ -122,7 +114,7 @@ SUIT_DISPLAY = {
     "♣": "♣️"
 }
 
-# Miroirs Compteur3 : ❤️ ↔ ♦️  |  ♠️ ↔ ♣️
+# Miroirs Compteur3/BOT1 : ❤️ ↔ ♦️  |  ♠️ ↔ ♣️
 SUIT_INVERSE = {
     "♥": "♦",
     "♦": "♥",
@@ -130,9 +122,7 @@ SUIT_INVERSE = {
     "♣": "♠",
 }
 
-# Prediction Bot2 Compteur2 (Dogon 2) :
-#   ♣️ manque → ♦️  |  ♠️ manque → ❤️
-#   ♦️ manque → ♣️  |  ❤️ manque → ♠️
+# Prédiction BOT3/Compteur2 (Dogon 2)
 SUIT_INVERSE_C2 = {
     "♣": "♦",
     "♠": "♥",
@@ -140,9 +130,7 @@ SUIT_INVERSE_C2 = {
     "♥": "♠",
 }
 
-# Prediction Compteur1 (Bot1) :
-#   ❤️ manque → ♣️  |  ♠️ manque → ♦️
-#   ♦️ manque → ♠️  |  ♣️ manque → ❤️
+# Prédiction BOT2/Compteur1 (Manque)
 SUIT_INVERSE_C1 = {
     "♥": "♣",
     "♠": "♦",

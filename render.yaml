@@ -1,11 +1,12 @@
 services:
   - type: web
-    name: baccarat-pro
+    name: buzz-influence
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: python main.py
     healthCheckPath: /health
     envVars:
+      # ── Credentials Telegram (OBLIGATOIRES — à renseigner manuellement) ──
       - key: API_ID
         sync: false
       - key: API_HASH
@@ -16,6 +17,22 @@ services:
         sync: false
       - key: TELEGRAM_SESSION
         sync: false
+
+      # ── Canaux (valeurs par défaut intégrées dans config.py) ─────────────
+      - key: PREDICTION_CHANNEL_ID
+        value: "-1003774449498"
+      - key: CHANNEL_COMPTEUR1_ID
+        value: "-1003773458877"
+      - key: CHANNEL_INVERSE_ID
+        value: "-1003800711004"
+      - key: CHANNEL_COMPTEUR3_ID
+        value: "-1003774449498"
+
+      # ── Paramètres des compteurs ──────────────────────────────────────────
+      - key: COMPTEUR1_ACTIVE
+        value: "true"
+      - key: COMPTEUR1_B
+        value: "8"
       - key: COMPTEUR2_ACTIVE
         value: "true"
       - key: COMPTEUR2_B
@@ -24,9 +41,11 @@ services:
         value: "true"
       - key: COMPTEUR3_B
         value: "5"
-      - key: COMPTEUR1_ACTIVE
-        value: "true"
-      - key: COMPTEUR1_B
-        value: "8"
+
+      # ── Port serveur web ──────────────────────────────────────────────────
+      - key: PORT
+        value: "10000"
+
+      # ── Polling API ───────────────────────────────────────────────────────
       - key: API_POLL_INTERVAL
-        value: "5"
+        value: "3"

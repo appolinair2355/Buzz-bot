@@ -12,7 +12,7 @@ from aiohttp import web
 
 from config import (
     API_ID, API_HASH, BOT_TOKEN, ADMIN_ID,
-    PREDICTION_CHANNEL_ID, CHANNEL_INVERSE_ID, CHANNEL_MANQUE_ID,
+    PREDICTION_CHANNEL_ID, CHANNEL_INVERSE_ID,
     CHANNEL_COMPTEUR3_ID, CHANNEL_COMPTEUR1_ID,
     PORT, API_POLL_INTERVAL,
     ALL_SUITS, SUIT_DISPLAY, SUIT_INVERSE, SUIT_INVERSE_C2, SUIT_INVERSE_C1,
@@ -20,6 +20,7 @@ from config import (
     COMPTEUR3_ACTIVE, COMPTEUR3_B,
     COMPTEUR1_ACTIVE, COMPTEUR1_B,
     TELEGRAM_SESSION,
+    validate_config,
 )
 from utils import get_latest_results
 
@@ -30,15 +31,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-if not API_ID or API_ID == 0:
-    logger.error("API_ID manquant")
-    exit(1)
-if not API_HASH:
-    logger.error("API_HASH manquant")
-    exit(1)
-if not BOT_TOKEN:
-    logger.error("BOT_TOKEN manquant")
-    exit(1)
+if not validate_config():
+    logger.error("❌ Configuration invalide — arrêt du bot.")
+    sys.exit(1)
 
 # ============================================================================
 # VARIABLES GLOBALES
@@ -219,37 +214,37 @@ def _result_icon(status: str) -> str:
 def build_prediction_msg_inverse(game_number: int, suit: str) -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
     return (
-        f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨Bot2\n"
-        f"🎮GAME: #N{game_number}\n"
-        f"🃏Carte {suit_display} : ⌛\n"
-        f"Mode: Dogon 2"
+        f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
+        f"🎮 GAME: #N{game_number}\n"
+        f"🃏 Carte {suit_display} : ⌛\n"
+        f"📌 Mode: Dogon 2"
     )
 
 def build_prediction_msg_manque(game_number: int, suit: str) -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
     return (
-        f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨Bot2\n"
-        f"🎮GAME: #N{game_number}\n"
-        f"🃏Carte {suit_display} : ⌛\n"
-        f"Mode: Dogon 2"
+        f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
+        f"🎮 GAME: #N{game_number}\n"
+        f"🃏 Carte {suit_display} : ⌛\n"
+        f"📌 Mode: Dogon 1"
     )
 
 def build_result_msg_inverse(game_number: int, suit: str, status: str) -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
     return (
-        f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨Bot2\n"
-        f"🎮GAME: #N{game_number}\n"
-        f"🃏Carte {suit_display} : {_result_icon(status)}\n"
-        f"Mode: Dogon 2"
+        f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
+        f"🎮 GAME: #N{game_number}\n"
+        f"🃏 Carte {suit_display} : {_result_icon(status)}\n"
+        f"📌 Mode: Dogon 2"
     )
 
 def build_result_msg_manque(game_number: int, suit: str, status: str) -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
     return (
-        f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨Bot2\n"
-        f"🎮GAME: #N{game_number}\n"
-        f"🃏Carte {suit_display} : {_result_icon(status)}\n"
-        f"Mode: Dogon 2"
+        f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
+        f"🎮 GAME: #N{game_number}\n"
+        f"🃏 Carte {suit_display} : {_result_icon(status)}\n"
+        f"📌 Mode: Dogon 1"
     )
 
 # ── Canaux de redirection Compteur2 : sans Bot ─────────────────────────────
@@ -259,9 +254,9 @@ def build_redirect_msg(game_number: int, suit: str, status: str = '⌛') -> str:
     icon = status if status in ('⌛',) or status.startswith('✅') else "❌"
     return (
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
-        f"🎮GAME: #N{game_number}\n"
-        f"🃏Carte {suit_display} : {icon}\n"
-        f"Mode: Dogon 2"
+        f"🎮 GAME: #N{game_number}\n"
+        f"🃏 Carte {suit_display} : {icon}\n"
+        f"📌 Mode: Dogon 2"
     )
 
 # ── Compteur3 : canal principal (Bot3) et redirection ──────────────────────
@@ -269,19 +264,19 @@ def build_redirect_msg(game_number: int, suit: str, status: str = '⌛') -> str:
 def build_prediction_msg_compteur3(game_number: int, suit: str) -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
     return (
-        f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨Bot3\n"
-        f"🎮GAME: #N{game_number}\n"
-        f"🃏Carte {suit_display} : ⌛\n"
-        f"Mode: Compteur 3"
+        f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
+        f"🎮 GAME: #N{game_number}\n"
+        f"🃏 Carte {suit_display} : ⌛\n"
+        f"📌 Mode: Miroir"
     )
 
 def build_result_msg_compteur3(game_number: int, suit: str, status: str) -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
     return (
-        f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨Bot3\n"
-        f"🎮GAME: #N{game_number}\n"
-        f"🃏Carte {suit_display} : {_result_icon(status)}\n"
-        f"Mode: Compteur 3"
+        f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
+        f"🎮 GAME: #N{game_number}\n"
+        f"🃏 Carte {suit_display} : {_result_icon(status)}\n"
+        f"📌 Mode: Miroir"
     )
 
 def build_redirect_msg_compteur3(game_number: int, suit: str, status: str = '⌛') -> str:
@@ -289,9 +284,9 @@ def build_redirect_msg_compteur3(game_number: int, suit: str, status: str = '⌛
     icon = status if status in ('⌛',) or status.startswith('✅') else "❌"
     return (
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
-        f"🎮GAME: #N{game_number}\n"
-        f"🃏Carte {suit_display} : {icon}\n"
-        f"Mode: Compteur 3"
+        f"🎮 GAME: #N{game_number}\n"
+        f"🃏 Carte {suit_display} : {icon}\n"
+        f"📌 Mode: Miroir"
     )
 
 # ── Compteur1 : canal principal (Bot1) et redirection ──────────────────────
@@ -299,19 +294,19 @@ def build_redirect_msg_compteur3(game_number: int, suit: str, status: str = '⌛
 def build_prediction_msg_compteur1(game_number: int, suit: str) -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
     return (
-        f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨Bot1\n"
-        f"🎮GAME: #N{game_number}\n"
-        f"🃏Carte {suit_display} : ⌛\n"
-        f"Mode: Compteur 1"
+        f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
+        f"🎮 GAME: #N{game_number}\n"
+        f"🃏 Carte {suit_display} : ⌛\n"
+        f"📌 Mode: Manque"
     )
 
 def build_result_msg_compteur1(game_number: int, suit: str, status: str) -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
     return (
-        f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨Bot1\n"
-        f"🎮GAME: #N{game_number}\n"
-        f"🃏Carte {suit_display} : {_result_icon(status)}\n"
-        f"Mode: Compteur 1"
+        f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
+        f"🎮 GAME: #N{game_number}\n"
+        f"🃏 Carte {suit_display} : {_result_icon(status)}\n"
+        f"📌 Mode: Manque"
     )
 
 def build_redirect_msg_compteur1(game_number: int, suit: str, status: str = '⌛') -> str:
@@ -319,9 +314,9 @@ def build_redirect_msg_compteur1(game_number: int, suit: str, status: str = '⌛
     icon = status if status in ('⌛',) or status.startswith('✅') else "❌"
     return (
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
-        f"🎮GAME: #N{game_number}\n"
-        f"🃏Carte {suit_display} : {icon}\n"
-        f"Mode: Compteur 1"
+        f"🎮 GAME: #N{game_number}\n"
+        f"🃏 Carte {suit_display} : {icon}\n"
+        f"📌 Mode: Manque"
     )
 
 # ============================================================================
@@ -385,6 +380,15 @@ async def send_compteur2_prediction(game_number: int, missing_suit: str) -> bool
         last_prediction_time = datetime.now()
         last_prediction_game = game_number
 
+        pending_inverse[game_number] = {
+            'suit': predicted_suit,
+            'message_id': sent.id,
+            'redirect_message_id': None,
+            'status': '⌛',
+            'awaiting_rattrapage': 0,
+            'triggered_by': missing_suit,
+        }
+
         add_prediction_to_history(game_number, predicted_suit, "", missing_suit)
 
         logger.info(
@@ -394,7 +398,9 @@ async def send_compteur2_prediction(game_number: int, missing_suit: str) -> bool
 
         if CHANNEL_INVERSE_ID:
             redirect_txt = build_redirect_msg(game_number, predicted_suit)
-            await send_to_redirect_channel(CHANNEL_INVERSE_ID, redirect_txt)
+            r_sent = await send_to_redirect_channel(CHANNEL_INVERSE_ID, redirect_txt)
+            if r_sent:
+                pending_inverse[game_number]['redirect_message_id'] = r_sent.id
 
         return True
 
@@ -434,14 +440,25 @@ async def send_compteur3_prediction(game_number: int, missing_suit: str) -> bool
 
         last_prediction_game_c3 = game_number
 
+        pending_compteur3[game_number] = {
+            'suit': inverse_suit,
+            'message_id': sent.id,
+            'redirect_message_id': None,
+            'status': '⌛',
+            'awaiting_rattrapage': 0,
+            'triggered_by': missing_suit,
+        }
+
         logger.info(
             f"✅ Compteur3 prédiction envoyée: #{game_number} "
             f"Miroir={inverse_suit} (déclenché par {missing_suit} absent {compteur3_b}x)"
         )
 
-        if CHANNEL_COMPTEUR3_ID:
+        if CHANNEL_COMPTEUR3_ID and CHANNEL_COMPTEUR3_ID != PREDICTION_CHANNEL_ID:
             redirect_txt = build_redirect_msg_compteur3(game_number, inverse_suit)
-            await send_to_redirect_channel(CHANNEL_COMPTEUR3_ID, redirect_txt)
+            r_sent = await send_to_redirect_channel(CHANNEL_COMPTEUR3_ID, redirect_txt)
+            if r_sent:
+                pending_compteur3[game_number]['redirect_message_id'] = r_sent.id
 
         return True
 
@@ -480,6 +497,15 @@ async def send_compteur1_prediction(game_number: int, missing_suit: str) -> bool
 
         last_prediction_game_c1 = game_number
 
+        pending_compteur1[game_number] = {
+            'suit': predicted_suit,
+            'message_id': sent.id,
+            'redirect_message_id': None,
+            'status': '⌛',
+            'awaiting_rattrapage': 0,
+            'triggered_by': missing_suit,
+        }
+
         logger.info(
             f"✅ Compteur1 prédiction envoyée: #{game_number} "
             f"Prédit={predicted_suit} (déclenché par {missing_suit} absent {compteur1_b}x)"
@@ -487,7 +513,9 @@ async def send_compteur1_prediction(game_number: int, missing_suit: str) -> bool
 
         if CHANNEL_COMPTEUR1_ID:
             redirect_txt = build_redirect_msg_compteur1(game_number, predicted_suit)
-            await send_to_redirect_channel(CHANNEL_COMPTEUR1_ID, redirect_txt)
+            r_sent = await send_to_redirect_channel(CHANNEL_COMPTEUR1_ID, redirect_txt)
+            if r_sent:
+                pending_compteur1[game_number]['redirect_message_id'] = r_sent.id
 
         return True
 
@@ -511,13 +539,16 @@ async def update_prediction_message(game_number: int, pred_type: str, status: st
         redirect_channel_id = CHANNEL_INVERSE_ID
     elif pred_type == 'manque':
         pending = pending_manque
-        redirect_channel_id = CHANNEL_MANQUE_ID
+        redirect_channel_id = CHANNEL_INVERSE_ID
     elif pred_type == 'compteur3':
         pending = pending_compteur3
         redirect_channel_id = CHANNEL_COMPTEUR3_ID
-    else:  # compteur1
+    elif pred_type == 'compteur1':
         pending = pending_compteur1
         redirect_channel_id = CHANNEL_COMPTEUR1_ID
+    else:
+        logger.error(f"❌ update_prediction_message: pred_type inconnu '{pred_type}'")
+        return
 
     if game_number not in pending:
         return
@@ -568,7 +599,8 @@ async def update_prediction_message(game_number: int, pred_type: str, status: st
         else:
             logger.info(f"❌ [{pred_type.upper()}] Perdu: #{game_number} {suit}")
 
-        del pending[game_number]
+        if game_number in pending:
+            del pending[game_number]
 
         # Mode Attente: déverrouille uniquement quand LES DEUX Compteur2 sont résolues
         if attente_mode and not trouve and pred_type != 'compteur3':
@@ -587,9 +619,13 @@ MAX_RATTRAPAGE = 2
 
 async def check_one_pending(game_number: int, player_suits: List[str], is_finished: bool,
                              pending: dict, pred_type: str):
-    """Vérifie les prédictions d'un type (inverse ou manque) pour un jeu donné."""
+    """Vérifie les prédictions d'un type pour un jeu donné.
 
-    # --- Vérification directe ---
+    - Vérification directe : si le jeu prédit est en cours/terminé
+    - Rattrapages : vérifie TOUS les rattrapages en attente pour ce jeu_number
+    """
+
+    # --- Vérification directe (awaiting_rattrapage == 0) ---
     if game_number in pending:
         pred = pending[game_number]
         if pred.get('awaiting_rattrapage', 0) == 0:
@@ -600,9 +636,10 @@ async def check_one_pending(game_number: int, player_suits: List[str], is_finish
             elif is_finished:
                 pred['awaiting_rattrapage'] = 1
                 logger.info(f"🔍 [{pred_type.upper()}] #{game_number}: {target_suit} ❌ → R1 #{game_number+1}")
+            # Ne pas retourner ici : d'autres rattrapages peuvent aussi concerner ce jeu
             return
 
-    # --- Vérifications rattrapages ---
+    # --- Vérifications rattrapages (toutes les entrées correspondant à ce jeu) ---
     for original_game, pred in list(pending.items()):
         awaiting = pred.get('awaiting_rattrapage', 0)
         if awaiting <= 0:
@@ -625,7 +662,7 @@ async def check_one_pending(game_number: int, player_suits: List[str], is_finish
             else:
                 logger.info(f"🔍 [{pred_type.upper()}] R{MAX_RATTRAPAGE} #{game_number}: perdu")
                 await update_prediction_message(original_game, pred_type, '❌', False)
-        return
+        # Continuer la boucle : plusieurs rattrapages peuvent attendre le même jeu
 
 async def check_prediction_result_dynamic(game_number: int, player_suits: List[str], is_finished: bool):
     await check_one_pending(game_number, player_suits, is_finished, pending_inverse, 'inverse')
@@ -944,6 +981,10 @@ async def api_polling_loop():
                     current_game_number = game_number
 
                     p_display = " ".join(SUIT_DISPLAY.get(s, s) for s in player_suits) or "—"
+
+                    # ── 0. VÉRIFICATION des prédictions en attente ─────────────
+                    if player_suits:
+                        await check_prediction_result_dynamic(game_number, player_suits, is_finished)
 
                     # ── 1. COMPTEUR2 ───────────────────────────────────────────
                     if game_number not in player_processed_games and ready:
@@ -1373,7 +1414,6 @@ async def cmd_channels(event):
 
     pred_status, pred_name = await check(PREDICTION_CHANNEL_ID)
     inv_status,  inv_name  = await check(CHANNEL_INVERSE_ID)
-    man_status,  man_name  = await check(CHANNEL_MANQUE_ID)
     c3_status,   c3_name   = await check(CHANNEL_COMPTEUR3_ID)
     c1_status,   c1_name   = await check(CHANNEL_COMPTEUR1_ID)
 
@@ -1384,12 +1424,12 @@ async def cmd_channels(event):
         f"**Jeux traités:** {len(player_processed_games)}\n\n"
         f"**Canal Principal:**\n"
         f"ID: `{PREDICTION_CHANNEL_ID}` | {pred_status} {pred_name}\n\n"
-        f"**Canal Compteur2 (Bot2):**\n"
-        f"ID: `{CHANNEL_INVERSE_ID or 'Non défini'}` | {inv_status} {inv_name}\n\n"
-        f"**Canal Compteur3 (Miroir):**\n"
-        f"ID: `{CHANNEL_COMPTEUR3_ID or 'Non défini'}` | {c3_status} {c3_name}\n\n"
-        f"**Canal Compteur1 (Bot1):**\n"
+        f"**Bot 1 — Compteur1 (Manque B={compteur1_b}):**\n"
         f"ID: `{CHANNEL_COMPTEUR1_ID or 'Non défini'}` | {c1_status} {c1_name}\n\n"
+        f"**Bot 2 — Compteur2 (Dogon 2 B={compteur2_b}):**\n"
+        f"ID: `{CHANNEL_INVERSE_ID or 'Non défini'}` | {inv_status} {inv_name}\n\n"
+        f"**Bot 3 — Compteur3 (Miroir B={compteur3_b}):**\n"
+        f"ID: `{CHANNEL_COMPTEUR3_ID or 'Non défini'}` | {c3_status} {c3_name}\n\n"
         f"**Paramètres:**\n"
         f"Compteur2 B={compteur2_b} | Actif: {'✅' if compteur2_active else '❌'}\n"
         f"Compteur3 B={compteur3_b} | Actif: {'✅' if compteur3_active else '❌'}\n"
@@ -1422,13 +1462,12 @@ async def cmd_canal(event):
 
     Commandes:
       /canal                     — Lister les canaux disponibles + config actuelle
-      /canal inverse <N>         — Canal N pour Compteur2 Dogon 2
-      /canal manque <N>          — Canal N pour Compteur2 Dogon 1
-      /canal compteur3 <N>       — Canal N pour Compteur3
-      /canal compteur1 <N>       — Canal N pour Compteur1
-      /canal inverse off / manque off / compteur3 off / compteur1 off — Retirer
+      /canal compteur1 <N>       — Canal N pour Bot 1 (Manque B=8)
+      /canal inverse <N>         — Canal N pour Bot 2 (Dogon 2 B=5)
+      /canal compteur3 <N>       — Canal N pour Bot 3 (Miroir B=5)
+      /canal compteur1 off / inverse off / compteur3 off — Retirer
     """
-    global CHANNEL_INVERSE_ID, CHANNEL_MANQUE_ID, CHANNEL_COMPTEUR3_ID, CHANNEL_COMPTEUR1_ID
+    global CHANNEL_INVERSE_ID, CHANNEL_COMPTEUR3_ID, CHANNEL_COMPTEUR1_ID
 
     if event.is_group or event.is_channel:
         return
@@ -1439,15 +1478,13 @@ async def cmd_canal(event):
     parts = event.message.message.strip().split()
 
     def config_lines():
-        inv_label = f"✅ `{CHANNEL_INVERSE_ID}`"   if CHANNEL_INVERSE_ID   else "❌ Non défini"
-        man_label = f"✅ `{CHANNEL_MANQUE_ID}`"    if CHANNEL_MANQUE_ID    else "❌ Non défini"
-        c3_label  = f"✅ `{CHANNEL_COMPTEUR3_ID}`" if CHANNEL_COMPTEUR3_ID else "❌ Non défini"
         c1_label  = f"✅ `{CHANNEL_COMPTEUR1_ID}`" if CHANNEL_COMPTEUR1_ID else "❌ Non défini"
+        inv_label = f"✅ `{CHANNEL_INVERSE_ID}`"   if CHANNEL_INVERSE_ID   else "❌ Non défini"
+        c3_label  = f"✅ `{CHANNEL_COMPTEUR3_ID}`" if CHANNEL_COMPTEUR3_ID else "❌ Non défini"
         return (
-            f"🔁 **Compteur2 Dogon 2** (Inverse) → {inv_label}\n"
-            f"🔁 **Compteur2 Dogon 1** (Manquant) → {man_label}\n"
-            f"🔁 **Compteur3**         (Miroir)   → {c3_label}\n"
-            f"🔁 **Compteur1**         (Bot1)     → {c1_label}"
+            f"🔁 **Bot 1** (Manque B=8)   → {c1_label}\n"
+            f"🔁 **Bot 2** (Dogon 2 B=5)  → {inv_label}\n"
+            f"🔁 **Bot 3** (Miroir B=5)   → {c3_label}"
         )
 
     # ── /canal seul : afficher la liste des canaux disponibles ────────────
@@ -1463,11 +1500,10 @@ async def cmd_canal(event):
                 lines.append(f"  {i}. {ch['title']}  (`{ch['id']}`)")
             lines.append("")
             lines.append("**Choisir par numéro :**")
-            lines.append("`/canal inverse <N>`   — Compteur2 Dogon 2 = canal N")
-            lines.append("`/canal manque <N>`    — Compteur2 Dogon 1 = canal N")
-            lines.append("`/canal compteur3 <N>` — Compteur3 = canal N")
-            lines.append("`/canal compteur1 <N>` — Compteur1 = canal N")
-            lines.append("`/canal <type> off` — Retirer (inverse/manque/compteur3/compteur1)")
+            lines.append("`/canal compteur1 <N>` — Bot 1 (Manque) = canal N")
+            lines.append("`/canal inverse <N>`   — Bot 2 (Dogon 2) = canal N")
+            lines.append("`/canal compteur3 <N>` — Bot 3 (Miroir) = canal N")
+            lines.append("`/canal <type> off` — Retirer (compteur1/inverse/compteur3)")
         else:
             lines.append("⚠️ Aucun canal trouvé.")
             lines.append("Ajoutez le bot comme administrateur dans vos canaux,")
@@ -1480,10 +1516,9 @@ async def cmd_canal(event):
         await event.respond(
             "❌ Usage invalide.\n\n"
             "`/canal` — Voir la liste\n"
-            "`/canal inverse <N>` — Compteur2 Dogon 2\n"
-            "`/canal manque <N>` — Compteur2 Dogon 1\n"
-            "`/canal compteur3 <N>` — Compteur3\n"
-            "`/canal compteur1 <N>` — Compteur1\n"
+            "`/canal compteur1 <N>` — Bot 1 (Manque)\n"
+            "`/canal inverse <N>` — Bot 2 (Dogon 2)\n"
+            "`/canal compteur3 <N>` — Bot 3 (Miroir)\n"
             "`/canal <type> off` — Retirer"
         )
         return
@@ -1491,15 +1526,14 @@ async def cmd_canal(event):
     direction = parts[1].lower()
     value = parts[2].lower()
 
-    if direction not in ('inverse', 'manque', 'compteur3', 'compteur1'):
-        await event.respond("❌ Type invalide. Utilisez `inverse`, `manque`, `compteur3` ou `compteur1`.")
+    if direction not in ('inverse', 'compteur3', 'compteur1'):
+        await event.respond("❌ Type invalide. Utilisez `compteur1`, `inverse` ou `compteur3`.")
         return
 
     label_map = {
-        'inverse':   "Compteur2 Dogon 2 (Inverse)",
-        'manque':    "Compteur2 Dogon 1 (Manquant)",
-        'compteur3': "Compteur3 (Miroir)",
-        'compteur1': "Compteur1 (Bot1)",
+        'compteur1': "Bot 1 (Manque B=8)",
+        'inverse':   "Bot 2 (Dogon 2 B=5)",
+        'compteur3': "Bot 3 (Miroir B=5)",
     }
     label = label_map[direction]
 
@@ -1507,8 +1541,6 @@ async def cmd_canal(event):
     if value == 'off':
         if direction == 'inverse':
             CHANNEL_INVERSE_ID = 0
-        elif direction == 'manque':
-            CHANNEL_MANQUE_ID = 0
         elif direction == 'compteur3':
             CHANNEL_COMPTEUR3_ID = 0
         else:
@@ -1549,8 +1581,6 @@ async def cmd_canal(event):
 
     if direction == 'inverse':
         CHANNEL_INVERSE_ID = channel_id
-    elif direction == 'manque':
-        CHANNEL_MANQUE_ID = channel_id
     elif direction == 'compteur3':
         CHANNEL_COMPTEUR3_ID = channel_id
     else:
@@ -1589,10 +1619,8 @@ async def cmd_test(event):
             return
 
         test_inv = build_prediction_msg_inverse(9999, "♦")
-        test_man = build_prediction_msg_manque(9999, "♠")
 
         sent_inv = await client.send_message(prediction_entity, f"{test_inv}\n[TEST]")
-        sent_man = await client.send_message(prediction_entity, f"{test_man}\n[TEST]")
 
         await asyncio.sleep(2)
 
@@ -1600,33 +1628,35 @@ async def cmd_test(event):
             prediction_entity, sent_inv.id,
             build_result_msg_inverse(9999, "♦", "✅0️⃣") + "\n[TEST]"
         )
-        await client.edit_message(
-            prediction_entity, sent_man.id,
-            build_result_msg_manque(9999, "♠", "✅0️⃣") + "\n[TEST]"
-        )
 
         await asyncio.sleep(2)
-        await client.delete_messages(prediction_entity, [sent_inv.id, sent_man.id])
+        await client.delete_messages(prediction_entity, [sent_inv.id])
 
         # Test canaux de redirection
-        if CHANNEL_INVERSE_ID:
+        if CHANNEL_COMPTEUR1_ID and CHANNEL_COMPTEUR1_ID != PREDICTION_CHANNEL_ID:
+            await send_to_redirect_channel(
+                CHANNEL_COMPTEUR1_ID,
+                build_redirect_msg_compteur1(9999, "♣") + "\n[TEST]"
+            )
+        if CHANNEL_INVERSE_ID and CHANNEL_INVERSE_ID != PREDICTION_CHANNEL_ID:
             await send_to_redirect_channel(
                 CHANNEL_INVERSE_ID,
                 build_redirect_msg(9999, "♦") + "\n[TEST]"
             )
-        if CHANNEL_MANQUE_ID:
+        if CHANNEL_COMPTEUR3_ID and CHANNEL_COMPTEUR3_ID != PREDICTION_CHANNEL_ID:
             await send_to_redirect_channel(
-                CHANNEL_MANQUE_ID,
-                build_redirect_msg(9999, "♠") + "\n[TEST]"
+                CHANNEL_COMPTEUR3_ID,
+                build_redirect_msg_compteur3(9999, "♠") + "\n[TEST]"
             )
 
         pred_name_display = getattr(prediction_entity, 'title', str(prediction_entity.id))
         await event.respond(
             f"✅ **TEST RÉUSSI!**\n\n"
             f"Canal principal: `{pred_name_display}`\n"
-            f"Envoi, modification et suppression: OK\n\n"
-            f"Canal Dogon 2: `{CHANNEL_INVERSE_ID if CHANNEL_INVERSE_ID else 'Non configuré'}`\n"
-            f"Canal Dogon 1: `{CHANNEL_MANQUE_ID if CHANNEL_MANQUE_ID else 'Non configuré'}`"
+            f"Envoi OK\n\n"
+            f"Bot 1 redirect: `{CHANNEL_COMPTEUR1_ID if CHANNEL_COMPTEUR1_ID else 'Non configuré'}`\n"
+            f"Bot 2 redirect: `{CHANNEL_INVERSE_ID if CHANNEL_INVERSE_ID else 'Non configuré'}`\n"
+            f"Bot 3 redirect: `{CHANNEL_COMPTEUR3_ID if CHANNEL_COMPTEUR3_ID else 'Non configuré'}`"
         )
 
     except ChatWriteForbiddenError:
@@ -1920,16 +1950,6 @@ async def start_bot():
                     logger.warning(f"⚠️ Canal Dogon 2 inaccessible: {CHANNEL_INVERSE_ID}")
             except Exception as e:
                 logger.warning(f"⚠️ Canal Dogon 2: {e}")
-
-        if CHANNEL_MANQUE_ID:
-            try:
-                man_entity = await resolve_channel(CHANNEL_MANQUE_ID)
-                if man_entity:
-                    logger.info(f"✅ Canal Dogon 1 OK: {getattr(man_entity, 'title', 'Unknown')}")
-                else:
-                    logger.warning(f"⚠️ Canal Dogon 1 inaccessible: {CHANNEL_MANQUE_ID}")
-            except Exception as e:
-                logger.warning(f"⚠️ Canal Dogon 1: {e}")
 
         if CHANNEL_COMPTEUR3_ID:
             try:
