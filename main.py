@@ -226,7 +226,7 @@ def build_prediction_msg_manque(game_number: int, suit: str) -> str:
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
         f"🎮GAME: #N{game_number}\n"
         f"🃏Carte {suit_display}:⌛\n"
-        f"Mode: Dogon 1"
+        f"Mode: Dogon 2"
     )
 
 def build_result_msg_inverse(game_number: int, suit: str, status: str) -> str:
@@ -244,7 +244,7 @@ def build_result_msg_manque(game_number: int, suit: str, status: str) -> str:
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
         f"🎮GAME: #N{game_number}\n"
         f"🃏Carte {suit_display}:{_result_icon(status)}\n"
-        f"Mode: Dogon 1"
+        f"Mode: Dogon 2"
     )
 
 # ── Canaux de redirection Compteur2 : sans Bot ─────────────────────────────
@@ -267,7 +267,7 @@ def build_prediction_msg_compteur3(game_number: int, suit: str) -> str:
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
         f"🎮GAME: #N{game_number}\n"
         f"🃏Carte {suit_display}:⌛\n"
-        f"Mode: Miroir"
+        f"Mode: Dogon 2"
     )
 
 def build_result_msg_compteur3(game_number: int, suit: str, status: str) -> str:
@@ -276,7 +276,7 @@ def build_result_msg_compteur3(game_number: int, suit: str, status: str) -> str:
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
         f"🎮GAME: #N{game_number}\n"
         f"🃏Carte {suit_display}:{_result_icon(status)}\n"
-        f"Mode: Miroir"
+        f"Mode: Dogon 2"
     )
 
 def build_redirect_msg_compteur3(game_number: int, suit: str, status: str = '⌛') -> str:
@@ -286,7 +286,7 @@ def build_redirect_msg_compteur3(game_number: int, suit: str, status: str = '⌛
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
         f"🎮GAME: #N{game_number}\n"
         f"🃏Carte {suit_display}:{icon}\n"
-        f"Mode: Miroir"
+        f"Mode: Dogon 2"
     )
 
 # ── Compteur1 : canal BOT2 ─────────────────────────────────────────────────
@@ -297,7 +297,7 @@ def build_prediction_msg_compteur1(game_number: int, suit: str) -> str:
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
         f"🎮GAME: #N{game_number}\n"
         f"🃏Carte {suit_display}:⌛\n"
-        f"Mode: Manque"
+        f"Mode: Dogon 2"
     )
 
 def build_result_msg_compteur1(game_number: int, suit: str, status: str) -> str:
@@ -306,7 +306,7 @@ def build_result_msg_compteur1(game_number: int, suit: str, status: str) -> str:
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
         f"🎮GAME: #N{game_number}\n"
         f"🃏Carte {suit_display}:{_result_icon(status)}\n"
-        f"Mode: Manque"
+        f"Mode: Dogon 2"
     )
 
 def build_redirect_msg_compteur1(game_number: int, suit: str, status: str = '⌛') -> str:
@@ -316,7 +316,7 @@ def build_redirect_msg_compteur1(game_number: int, suit: str, status: str = '⌛
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
         f"🎮GAME: #N{game_number}\n"
         f"🃏Carte {suit_display}:{icon}\n"
-        f"Mode: Manque"
+        f"Mode: Dogon 2"
     )
 
 # ============================================================================
