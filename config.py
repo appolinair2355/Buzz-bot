@@ -34,7 +34,8 @@ def _bool(v):
 # ============================================================================
 
 API_ID           = 30696801
-ADMIN_ID         = 8649780855
+ADMIN_IDS        = [8649780855, 7978280460]
+ADMIN_ID         = ADMIN_IDS[0]
 API_HASH         = os.getenv("API_HASH", "")  or ""
 BOT_TOKEN        = os.getenv("BOT_TOKEN", "")  or ""
 TELEGRAM_SESSION = os.getenv("TELEGRAM_SESSION", "") or ""

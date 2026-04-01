@@ -11,7 +11,7 @@ from telethon.errors import ChatWriteForbiddenError, UserBannedInChannelError, F
 from aiohttp import web
 
 from config import (
-    API_ID, API_HASH, BOT_TOKEN, ADMIN_ID,
+    API_ID, API_HASH, BOT_TOKEN, ADMIN_ID, ADMIN_IDS,
     PREDICTION_CHANNEL_ID, CHANNEL_INVERSE_ID,
     CHANNEL_COMPTEUR3_ID, CHANNEL_COMPTEUR1_ID,
     PORT, API_POLL_INTERVAL,
@@ -96,6 +96,14 @@ last_prediction_game: int = 0
 
 # Pour éviter de déclencher le reset plusieurs fois pour la partie 1440
 reset_done_for_cycle: bool = False
+
+# ── Statistiques par bot (réinitialisées à chaque cycle #1440) ───────────────
+stats_c1: Dict[str, int] = {'total': 0, 'won': 0, 'lost': 0}
+stats_c2: Dict[str, int] = {'total': 0, 'won': 0, 'lost': 0}
+stats_c3: Dict[str, int] = {'total': 0, 'won': 0, 'lost': 0}
+
+# ── Mode Traduction (arabe + russe ajoutés aux messages de prédiction) ────────
+traduction_active: bool = False
 
 # ============================================================================
 # INTERVALLES HORAIRES - Prédictions autorisées (heure du Bénin = UTC+1)
@@ -209,43 +217,69 @@ async def send_to_redirect_channel(channel_id: int, text: str):
 def _result_icon(status: str) -> str:
     return status if status.startswith('✅') else "❌"
 
+def get_traduction_suffix(game_number: int, suit_display: str, status_icon: str, mode_ar: str, mode_ru: str) -> str:
+    """Retourne les traductions arabe + russe si traduction_active, sinon chaîne vide."""
+    if not traduction_active:
+        return ""
+    ar = (
+        f"\n\n🇸🇦 **عربي:**\n"
+        f"باكارا برو ✨\n"
+        f"🎮 اللعبة: #N{game_number}\n"
+        f"🃏 البطاقة {suit_display}:{status_icon}\n"
+        f"الوضع: {mode_ar}"
+    )
+    ru = (
+        f"\n\n🇷🇺 **Русский:**\n"
+        f"БАКАРА ПРО ✨\n"
+        f"🎮 ИГРА: #N{game_number}\n"
+        f"🃏 Карта {suit_display}:{status_icon}\n"
+        f"Режим: {mode_ru}"
+    )
+    return ar + ru
+
 # ── Canal principal : Compteur2 Bot2 ───────────────────────────────────────
 
 def build_prediction_msg_inverse(game_number: int, suit: str) -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
-    return (
+    base = (
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
         f"🎮GAME: #N{game_number}\n"
         f"🃏Carte {suit_display}:⌛\n"
         f"Mode: Dogon 2"
     )
+    return base + get_traduction_suffix(game_number, suit_display, "⌛", "دوجون 2", "Догон 2")
 
 def build_prediction_msg_manque(game_number: int, suit: str) -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
-    return (
+    base = (
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
         f"🎮GAME: #N{game_number}\n"
         f"🃏Carte {suit_display}:⌛\n"
         f"Mode: Dogon 2"
     )
+    return base + get_traduction_suffix(game_number, suit_display, "⌛", "دوجون 2", "Догон 2")
 
 def build_result_msg_inverse(game_number: int, suit: str, status: str) -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
-    return (
+    icon = _result_icon(status)
+    base = (
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
         f"🎮GAME: #N{game_number}\n"
-        f"🃏Carte {suit_display}:{_result_icon(status)}\n"
+        f"🃏Carte {suit_display}:{icon}\n"
         f"Mode: Dogon 2"
     )
+    return base + get_traduction_suffix(game_number, suit_display, icon, "دوجون 2", "Догон 2")
 
 def build_result_msg_manque(game_number: int, suit: str, status: str) -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
-    return (
+    icon = _result_icon(status)
+    base = (
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
         f"🎮GAME: #N{game_number}\n"
-        f"🃏Carte {suit_display}:{_result_icon(status)}\n"
+        f"🃏Carte {suit_display}:{icon}\n"
         f"Mode: Dogon 2"
     )
+    return base + get_traduction_suffix(game_number, suit_display, icon, "دوجون 2", "Догон 2")
 
 # ── Canaux de redirection Compteur2 : sans Bot ─────────────────────────────
 
@@ -263,21 +297,24 @@ def build_redirect_msg(game_number: int, suit: str, status: str = '⌛') -> str:
 
 def build_prediction_msg_compteur3(game_number: int, suit: str) -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
-    return (
+    base = (
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
         f"🎮GAME: #N{game_number}\n"
         f"🃏Carte {suit_display}:⌛\n"
-        f"Mode: Dogon 2"
+        f"Mode: Miroir"
     )
+    return base + get_traduction_suffix(game_number, suit_display, "⌛", "مرآة", "Зеркало")
 
 def build_result_msg_compteur3(game_number: int, suit: str, status: str) -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
-    return (
+    icon = _result_icon(status)
+    base = (
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
         f"🎮GAME: #N{game_number}\n"
-        f"🃏Carte {suit_display}:{_result_icon(status)}\n"
-        f"Mode: Dogon 2"
+        f"🃏Carte {suit_display}:{icon}\n"
+        f"Mode: Miroir"
     )
+    return base + get_traduction_suffix(game_number, suit_display, icon, "مرآة", "Зеркало")
 
 def build_redirect_msg_compteur3(game_number: int, suit: str, status: str = '⌛') -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
@@ -293,21 +330,24 @@ def build_redirect_msg_compteur3(game_number: int, suit: str, status: str = '⌛
 
 def build_prediction_msg_compteur1(game_number: int, suit: str) -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
-    return (
+    base = (
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
         f"🎮GAME: #N{game_number}\n"
         f"🃏Carte {suit_display}:⌛\n"
-        f"Mode: Dogon 2"
+        f"Mode: Manque"
     )
+    return base + get_traduction_suffix(game_number, suit_display, "⌛", "مانك", "Манк")
 
 def build_result_msg_compteur1(game_number: int, suit: str, status: str) -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
-    return (
+    icon = _result_icon(status)
+    base = (
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
         f"🎮GAME: #N{game_number}\n"
-        f"🃏Carte {suit_display}:{_result_icon(status)}\n"
-        f"Mode: Dogon 2"
+        f"🃏Carte {suit_display}:{icon}\n"
+        f"Mode: Manque"
     )
+    return base + get_traduction_suffix(game_number, suit_display, icon, "مانك", "Манк")
 
 def build_redirect_msg_compteur1(game_number: int, suit: str, status: str = '⌛') -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
@@ -525,7 +565,7 @@ async def update_prediction_message(game_number: int, pred_type: str, status: st
       inverse    → BOT3 (CHANNEL_INVERSE_ID)
       compteur1  → BOT2 (CHANNEL_COMPTEUR1_ID)
     """
-    global attente_locked
+    global attente_locked, stats_c1, stats_c2, stats_c3
 
     if pred_type == 'inverse':
         pending = pending_inverse
@@ -571,6 +611,26 @@ async def update_prediction_message(game_number: int, pred_type: str, status: st
             logger.info(f"✅ [{pred_type.upper()}] Gagné: #{game_number} {suit} ({status})")
         else:
             logger.info(f"❌ [{pred_type.upper()}] Perdu: #{game_number} {suit}")
+
+        # ── Mise à jour des statistiques par bot ──────────────────────────
+        if pred_type in ('inverse', 'manque'):
+            stats_c2['total'] += 1
+            if trouve:
+                stats_c2['won'] += 1
+            else:
+                stats_c2['lost'] += 1
+        elif pred_type == 'compteur3':
+            stats_c3['total'] += 1
+            if trouve:
+                stats_c3['won'] += 1
+            else:
+                stats_c3['lost'] += 1
+        elif pred_type == 'compteur1':
+            stats_c1['total'] += 1
+            if trouve:
+                stats_c1['won'] += 1
+            else:
+                stats_c1['lost'] += 1
 
         if game_number in pending:
             del pending[game_number]
@@ -999,6 +1059,20 @@ async def api_polling_loop():
 # RESET COMPLET
 # ============================================================================
 
+def build_bilan_msg(stats_dict: dict) -> str:
+    """Construit le message de bilan (résultat final) pour un bot."""
+    total = stats_dict['total']
+    won   = stats_dict['won']
+    lost  = stats_dict['lost']
+    win_rate = (won / total * 100) if total > 0 else 0.0
+    return (
+        f"📊 Résultat final :\n"
+        f" • 🎮 All games : {total}\n"
+        f" • ✅ Won : {won}\n"
+        f" • ❌ Lost : {lost}\n"
+        f" • 📈 Win rate : {win_rate:.1f}%"
+    )
+
 async def perform_full_reset(reason: str):
     global pending_inverse, pending_manque, pending_compteur3, pending_compteur1, last_prediction_time
     global compteur2_absences, compteur2_last_game, attente_locked
@@ -1009,8 +1083,40 @@ async def perform_full_reset(reason: str):
     global compteur1_last_seen, compteur1_processed_games, last_prediction_game_c1
     global player_processed_games, api_results_cache
     global last_prediction_game, reset_done_for_cycle
+    global stats_c1, stats_c2, stats_c3
 
-    stats = len(pending_inverse) + len(pending_manque) + len(pending_compteur3) + len(pending_compteur1)
+    nb_preds = len(pending_inverse) + len(pending_manque) + len(pending_compteur3) + len(pending_compteur1)
+
+    # ── Envoi des bilans dans chaque canal respectif AVANT le reset ──────────
+    if client and client.is_connected():
+        # BOT1 — Compteur3 (Miroir) → PREDICTION_CHANNEL_ID
+        if PREDICTION_CHANNEL_ID and stats_c3['total'] > 0:
+            try:
+                entity = await resolve_channel(PREDICTION_CHANNEL_ID)
+                if entity:
+                    await client.send_message(entity, build_bilan_msg(stats_c3))
+            except Exception as e:
+                logger.error(f"❌ Bilan BOT1 failed: {e}")
+
+        # BOT2 — Compteur1 (Manque) → CHANNEL_COMPTEUR1_ID
+        if CHANNEL_COMPTEUR1_ID and stats_c1['total'] > 0:
+            try:
+                entity = await resolve_channel(CHANNEL_COMPTEUR1_ID)
+                if entity:
+                    await client.send_message(entity, build_bilan_msg(stats_c1))
+            except Exception as e:
+                logger.error(f"❌ Bilan BOT2 failed: {e}")
+
+        # BOT3 — Compteur2 (Dogon 2) → CHANNEL_INVERSE_ID
+        if CHANNEL_INVERSE_ID and stats_c2['total'] > 0:
+            try:
+                entity = await resolve_channel(CHANNEL_INVERSE_ID)
+                if entity:
+                    await client.send_message(entity, build_bilan_msg(stats_c2))
+            except Exception as e:
+                logger.error(f"❌ Bilan BOT3 failed: {e}")
+
+    # ── Remise à zéro des compteurs ──────────────────────────────────────────
     pending_inverse.clear()
     pending_manque.clear()
     pending_compteur3.clear()
@@ -1034,21 +1140,11 @@ async def perform_full_reset(reason: str):
     attente_locked = False
     player_processed_games = set()
     api_results_cache = {}
+    stats_c1 = {'total': 0, 'won': 0, 'lost': 0}
+    stats_c2 = {'total': 0, 'won': 0, 'lost': 0}
+    stats_c3 = {'total': 0, 'won': 0, 'lost': 0}
 
-    logger.info(f"🔄 {reason} - {stats} prédictions effacées")
-
-    try:
-        prediction_entity = await resolve_channel(PREDICTION_CHANNEL_ID)
-        if prediction_entity and client and client.is_connected():
-            await client.send_message(
-                prediction_entity,
-                f"🔄 **RESET SYSTÈME**\n\n{reason}\n\n"
-                f"✅ Compteurs remis à zéro\n"
-                f"✅ {stats} prédictions effacées\n\n"
-                f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨"
-            )
-    except Exception as e:
-        logger.error(f"❌ Notif reset failed: {e}")
+    logger.info(f"🔄 {reason} - {nb_preds} prédictions effacées")
 
 # ============================================================================
 # COMMANDES ADMIN
@@ -1060,7 +1156,7 @@ async def cmd_compteur2(event):
 
     if event.is_group or event.is_channel:
         return
-    if event.sender_id != ADMIN_ID and ADMIN_ID != 0:
+    if ADMIN_IDS and event.sender_id not in ADMIN_IDS:
         await event.respond("🔒 Admin uniquement")
         return
 
@@ -1131,7 +1227,7 @@ async def cmd_compteur3(event):
 
     if event.is_group or event.is_channel:
         return
-    if event.sender_id != ADMIN_ID and ADMIN_ID != 0:
+    if ADMIN_IDS and event.sender_id not in ADMIN_IDS:
         await event.respond("🔒 Admin uniquement")
         return
 
@@ -1199,7 +1295,7 @@ async def cmd_compteur1(event):
 
     if event.is_group or event.is_channel:
         return
-    if event.sender_id != ADMIN_ID and ADMIN_ID != 0:
+    if ADMIN_IDS and event.sender_id not in ADMIN_IDS:
         await event.respond("🔒 Admin uniquement")
         return
 
@@ -1266,7 +1362,7 @@ async def cmd_attente(event):
 
     if event.is_group or event.is_channel:
         return
-    if event.sender_id != ADMIN_ID and ADMIN_ID != 0:
+    if ADMIN_IDS and event.sender_id not in ADMIN_IDS:
         await event.respond("🔒 Admin uniquement")
         return
 
@@ -1311,7 +1407,7 @@ async def cmd_attente(event):
 async def cmd_history(event):
     if event.is_group or event.is_channel:
         return
-    if event.sender_id != ADMIN_ID and ADMIN_ID != 0:
+    if ADMIN_IDS and event.sender_id not in ADMIN_IDS:
         await event.respond("🔒 Admin uniquement")
         return
 
@@ -1371,7 +1467,7 @@ async def cmd_history(event):
 async def cmd_channels(event):
     if event.is_group or event.is_channel:
         return
-    if event.sender_id != ADMIN_ID and ADMIN_ID != 0:
+    if ADMIN_IDS and event.sender_id not in ADMIN_IDS:
         await event.respond("🔒 Admin uniquement")
         return
 
@@ -1410,7 +1506,7 @@ async def cmd_channels(event):
         f"Compteur1 B={compteur1_b} | Actif: {'✅' if compteur1_active else '❌'}\n"
         f"Rattrapage max: {MAX_RATTRAPAGE}\n"
         f"Mode Attente: {'✅ ON' if attente_mode else '❌ OFF'}\n"
-        f"Admin ID: `{ADMIN_ID}`"
+        f"Admin IDs: `{', '.join(str(i) for i in ADMIN_IDS)}`"
     )
 
 async def get_bot_channels():
@@ -1445,7 +1541,7 @@ async def cmd_canal(event):
 
     if event.is_group or event.is_channel:
         return
-    if event.sender_id != ADMIN_ID and ADMIN_ID != 0:
+    if ADMIN_IDS and event.sender_id not in ADMIN_IDS:
         await event.respond("🔒 Admin uniquement")
         return
 
@@ -1570,7 +1666,7 @@ async def cmd_canal(event):
 async def cmd_test(event):
     if event.is_group or event.is_channel:
         return
-    if event.sender_id != ADMIN_ID and ADMIN_ID != 0:
+    if ADMIN_IDS and event.sender_id not in ADMIN_IDS:
         await event.respond("🔒 Admin uniquement")
         return
 
@@ -1641,7 +1737,7 @@ async def cmd_test(event):
 async def cmd_reset(event):
     if event.is_group or event.is_channel:
         return
-    if event.sender_id != ADMIN_ID and ADMIN_ID != 0:
+    if ADMIN_IDS and event.sender_id not in ADMIN_IDS:
         await event.respond("🔒 Admin uniquement")
         return
 
@@ -1649,10 +1745,73 @@ async def cmd_reset(event):
     await perform_full_reset("Reset manuel admin")
     await event.respond("✅ Reset effectué! Compteurs remis à zéro.")
 
+async def cmd_traduction(event):
+    """Active ou désactive l'ajout de traductions (arabe + russe) aux messages de prédiction."""
+    global traduction_active
+
+    if event.is_group or event.is_channel:
+        return
+    if ADMIN_IDS and event.sender_id not in ADMIN_IDS:
+        await event.respond("🔒 Admin uniquement")
+        return
+
+    parts = event.message.message.strip().split()
+
+    if len(parts) == 1 or (len(parts) == 2 and parts[1].lower() == 'status'):
+        status = "✅ ON" if traduction_active else "❌ OFF"
+        await event.respond(
+            f"🌍 **MODE TRADUCTION**\n\n"
+            f"Statut: {status}\n\n"
+            f"Quand activé, chaque message de prédiction inclut automatiquement\n"
+            f"une traduction en 🇸🇦 arabe et 🇷🇺 russe.\n\n"
+            f"`/traduction on` — Activer\n"
+            f"`/traduction off` — Désactiver"
+        )
+        return
+
+    arg = parts[1].lower()
+    if arg == 'on':
+        traduction_active = True
+        await event.respond(
+            "✅ **Mode Traduction ACTIVÉ**\n\n"
+            "Les prédictions incluront désormais l'arabe 🇸🇦 et le russe 🇷🇺."
+        )
+    elif arg == 'off':
+        traduction_active = False
+        await event.respond("❌ **Mode Traduction DÉSACTIVÉ**")
+    else:
+        await event.respond(
+            "🌍 **TRADUCTION - Aide**\n\n"
+            "`/traduction on` — Activer les traductions (arabe + russe)\n"
+            "`/traduction off` — Désactiver\n"
+            "`/traduction` — Afficher l'état"
+        )
+
+async def cmd_bilan(event):
+    """Affiche le bilan actuel de chaque bot sans faire de reset."""
+    if event.is_group or event.is_channel:
+        return
+    if ADMIN_IDS and event.sender_id not in ADMIN_IDS:
+        await event.respond("🔒 Admin uniquement")
+        return
+
+    lines = [
+        "📊 **BILAN ACTUEL**\n",
+        "🟡 **BOT1 — Miroir (Compteur3)**",
+        build_bilan_msg(stats_c3),
+        "",
+        "🔵 **BOT2 — Manque (Compteur1)**",
+        build_bilan_msg(stats_c1),
+        "",
+        "🟢 **BOT3 — Dogon 2 (Compteur2)**",
+        build_bilan_msg(stats_c2),
+    ]
+    await event.respond("\n".join(lines))
+
 async def cmd_status(event):
     if event.is_group or event.is_channel:
         return
-    if event.sender_id != ADMIN_ID and ADMIN_ID != 0:
+    if ADMIN_IDS and event.sender_id not in ADMIN_IDS:
         await event.respond("🔒 Admin uniquement")
         return
 
@@ -1690,7 +1849,7 @@ async def cmd_status(event):
 async def cmd_announce(event):
     if event.is_group or event.is_channel:
         return
-    if event.sender_id != ADMIN_ID and ADMIN_ID != 0:
+    if ADMIN_IDS and event.sender_id not in ADMIN_IDS:
         await event.respond("🔒 Admin uniquement")
         return
 
@@ -1732,7 +1891,7 @@ async def cmd_predi(event):
 
     if event.is_group or event.is_channel:
         return
-    if event.sender_id != ADMIN_ID and ADMIN_ID != 0:
+    if ADMIN_IDS and event.sender_id not in ADMIN_IDS:
         await event.respond("🔒 Admin uniquement")
         return
 
@@ -1869,6 +2028,8 @@ async def cmd_help(event):
         "`/reset` — Reset complet\n"
         "`/announce <msg>` — Annonce\n"
         "`/strategie` — Documentation des 3 stratégies\n"
+        "`/traduction on/off` — Activer/désactiver traduction arabe+russe\n"
+        "`/bilan` — Afficher le bilan actuel de chaque bot\n"
         "`/help` — Cette aide"
     )
 
@@ -1880,7 +2041,7 @@ async def cmd_strategie(event):
     """Envoie la documentation complète des 3 stratégies, avec le nom réel de chaque canal."""
     if event.is_group or event.is_channel:
         return
-    if event.sender_id != ADMIN_ID and ADMIN_ID != 0:
+    if ADMIN_IDS and event.sender_id not in ADMIN_IDS:
         await event.respond("🔒 Admin uniquement")
         return
 
@@ -1980,6 +2141,8 @@ def setup_handlers():
     client.add_event_handler(cmd_test, events.NewMessage(pattern=r'^/test$'))
     client.add_event_handler(cmd_announce, events.NewMessage(pattern=r'^/announce'))
     client.add_event_handler(cmd_strategie, events.NewMessage(pattern=r'^/strategie$'))
+    client.add_event_handler(cmd_traduction, events.NewMessage(pattern=r'^/traduction'))
+    client.add_event_handler(cmd_bilan, events.NewMessage(pattern=r'^/bilan$'))
 
 # ============================================================================
 # DÉMARRAGE
