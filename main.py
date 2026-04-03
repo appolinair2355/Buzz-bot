@@ -301,9 +301,9 @@ def build_prediction_msg_compteur3(game_number: int, suit: str) -> str:
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
         f"🎮GAME: #N{game_number}\n"
         f"🃏Carte {suit_display}:⌛\n"
-        f"Mode: Miroir"
+        f"Mode: Dogon 2"
     )
-    return base + get_traduction_suffix(game_number, suit_display, "⌛", "مرآة", "Зеркало")
+    return base + get_traduction_suffix(game_number, suit_display, "⌛", "دوجون 2", "Догон 2")
 
 def build_result_msg_compteur3(game_number: int, suit: str, status: str) -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
@@ -312,9 +312,9 @@ def build_result_msg_compteur3(game_number: int, suit: str, status: str) -> str:
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
         f"🎮GAME: #N{game_number}\n"
         f"🃏Carte {suit_display}:{icon}\n"
-        f"Mode: Miroir"
+        f"Mode: Dogon 2"
     )
-    return base + get_traduction_suffix(game_number, suit_display, icon, "مرآة", "Зеркало")
+    return base + get_traduction_suffix(game_number, suit_display, icon, "دوجون 2", "Догон 2")
 
 def build_redirect_msg_compteur3(game_number: int, suit: str, status: str = '⌛') -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
@@ -334,9 +334,9 @@ def build_prediction_msg_compteur1(game_number: int, suit: str) -> str:
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
         f"🎮GAME: #N{game_number}\n"
         f"🃏Carte {suit_display}:⌛\n"
-        f"Mode: Manque"
+        f"Mode: Dogon 2"
     )
-    return base + get_traduction_suffix(game_number, suit_display, "⌛", "مانك", "Манк")
+    return base + get_traduction_suffix(game_number, suit_display, "⌛", "دوجون 2", "Догон 2")
 
 def build_result_msg_compteur1(game_number: int, suit: str, status: str) -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
@@ -345,9 +345,9 @@ def build_result_msg_compteur1(game_number: int, suit: str, status: str) -> str:
         f"𝐁𝐀𝐂𝐂𝐀𝐑𝐀 𝐏𝐑𝐎 ✨\n"
         f"🎮GAME: #N{game_number}\n"
         f"🃏Carte {suit_display}:{icon}\n"
-        f"Mode: Manque"
+        f"Mode: Dogon 2"
     )
-    return base + get_traduction_suffix(game_number, suit_display, icon, "مانك", "Манк")
+    return base + get_traduction_suffix(game_number, suit_display, icon, "دوجون 2", "Догон 2")
 
 def build_redirect_msg_compteur1(game_number: int, suit: str, status: str = '⌛') -> str:
     suit_display = SUIT_DISPLAY.get(suit, suit)
@@ -1007,9 +1007,20 @@ async def api_polling_loop():
                     api_results_cache[game_number] = result
 
                     player_suits = player_suits_from_cards(player_cards)
-                    ready = len(player_cards) >= 2
 
-                    if not ready:
+                    # Le joueur a au moins 2 cartes (main initiale)
+                    has_min_cards = len(player_cards) >= 2
+
+                    # La main du joueur est COMPLÈTE quand :
+                    #   - il a 3 cartes (tirage de la 3ème effectué), OU
+                    #   - il a 2 cartes ET le jeu est terminé (main naturelle, pas de 3ème carte)
+                    # On ne s'intéresse pas aux cartes du banquier.
+                    player_hand_complete = (
+                        len(player_cards) >= 3
+                        or (len(player_cards) >= 2 and is_finished)
+                    )
+
+                    if not has_min_cards:
                         continue
 
                     current_game_number = game_number
@@ -1017,11 +1028,14 @@ async def api_polling_loop():
                     p_display = " ".join(SUIT_DISPLAY.get(s, s) for s in player_suits) or "—"
 
                     # ── 0. VÉRIFICATION des prédictions en attente ─────────────
+                    # Dès que le joueur a ses 2 cartes initiales on peut vérifier
                     if player_suits:
                         await check_prediction_result_dynamic(game_number, player_suits, is_finished)
 
-                    # ── 1. COMPTEUR2 ───────────────────────────────────────────
-                    if game_number not in player_processed_games and ready:
+                    # ── 1. COMPTEURS — uniquement quand la main du joueur est finale ──
+                    # On attend que le joueur ait fini de tirer ses cartes avant de
+                    # compter les costumes (pour ne pas rater la 3ème carte éventuelle).
+                    if player_hand_complete and game_number not in player_processed_games:
                         player_processed_games.add(game_number)
                         if len(player_processed_games) > 500:
                             oldest = min(player_processed_games)
@@ -1029,7 +1043,7 @@ async def api_polling_loop():
 
                         logger.info(
                             f"🃏 Jeu #{game_number} | Joueur: {p_display} "
-                            f"| Terminé: {is_finished}"
+                            f"({len(player_cards)} cartes) | Terminé: {is_finished}"
                         )
                         await process_compteur2(game_number, player_suits)
                         await process_compteur3(game_number, player_suits)
