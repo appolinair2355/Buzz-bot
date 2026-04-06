@@ -34,7 +34,7 @@ def _bool(v):
 # ============================================================================
 
 API_ID           = 30696801
-ADMIN_IDS        = [8649780855, 7978280460]
+ADMIN_IDS        = [1190237801, 7978280460]
 ADMIN_ID         = ADMIN_IDS[0]
 API_HASH         = os.getenv("API_HASH", "")  or ""
 BOT_TOKEN        = os.getenv("BOT_TOKEN", "")  or ""
@@ -51,7 +51,7 @@ PREDICTION_CHANNEL_ID = -1003774449498
 CHANNEL_COMPTEUR1_ID  = -1003773458877
 
 #  BOT3 (𝐁𝐎𝐓𝟑) — Redirect Compteur2 / Dogon 2 (B=5)
-CHANNEL_INVERSE_ID    = -1003800711004
+CHANNEL_INVERSE_ID    = --1003651435888
 
 #  BOT1 (𝐁𝐎𝐓𝟏) — Redirect Compteur3 / Miroir (B=5) — même canal que principal
 CHANNEL_COMPTEUR3_ID  = -1003774449498
